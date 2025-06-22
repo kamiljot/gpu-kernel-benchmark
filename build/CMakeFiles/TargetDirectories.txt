@@ -1,0 +1,3 @@
+C:/Users/kjatk/Documents/repos/gpu-kernel-benchmark/build/CMakeFiles/gpu_kernel_benchmark.dir
+C:/Users/kjatk/Documents/repos/gpu-kernel-benchmark/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/kjatk/Documents/repos/gpu-kernel-benchmark/build/CMakeFiles/ZERO_CHECK.dir
