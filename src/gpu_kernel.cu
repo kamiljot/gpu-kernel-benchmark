@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <math.h>
 
-// CUDA kernel for element-wise computation: c[i] = sqrt(a[i]) + log(b[i])
+// Global memory CUDA kernel: compute sqrt(a[i]) + log(b[i])
 __global__ void sqrt_log_kernel(const float* a, const float* b, float* c, int N) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N) {
@@ -9,46 +9,31 @@ __global__ void sqrt_log_kernel(const float* a, const float* b, float* c, int N)
     }
 }
 
-// Host function that manages GPU memory and timing, and launches the kernel
-extern "C" {
-    void gpu_math(const float* a, const float* b, float* c, int N, float* kernel_time_ms) {
-        float* d_a, * d_b, * d_c;
-        size_t size = N * sizeof(float);
+// Shared memory kernel: loads input to shared memory before computing
+__global__ void sqrt_log_shared_kernel(const float* a, const float* b, float* c, int N) {
+    extern __shared__ float shared[];
+    float* sh_a = shared;
+    float* sh_b = shared + blockDim.x;
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < N) {
+        sh_a[threadIdx.x] = a[i];
+        sh_b[threadIdx.x] = b[i];
+        __syncthreads();
+        c[i] = sqrtf(sh_a[threadIdx.x]) + logf(sh_b[threadIdx.x] + 1e-6f);
+    }
+}
 
-        // Allocate memory on device
-        cudaMalloc(&d_a, size);
-        cudaMalloc(&d_b, size);
-        cudaMalloc(&d_c, size);
-
-        // Copy data from host to device
-        cudaMemcpy(d_a, a, size, cudaMemcpyHostToDevice);
-        cudaMemcpy(d_b, b, size, cudaMemcpyHostToDevice);
-
-        int blockSize = 256;
-        int numBlocks = (N + blockSize - 1) / blockSize;
-
-        // Measure kernel execution time using CUDA events
-        cudaEvent_t start, stop;
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
-        cudaEventRecord(start);
-
-        sqrt_log_kernel << <numBlocks, blockSize >> > (d_a, d_b, d_c, N);
-
-        cudaEventRecord(stop);
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(kernel_time_ms, start, stop);
-
-        // Copy results back to host
-        cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost);
-
-        // Free device memory
-        cudaFree(d_a);
-        cudaFree(d_b);
-        cudaFree(d_c);
-
-        // Destroy CUDA events
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
+// Vectorized kernel with float4 memory access
+__global__ void sqrt_log_float4_kernel(const float4* a, const float4* b, float4* c, int N_vec4) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < N_vec4) {
+        float4 av = a[i];
+        float4 bv = b[i];
+        float4 cv;
+        cv.x = sqrtf(av.x) + logf(bv.x + 1e-6f);
+        cv.y = sqrtf(av.y) + logf(bv.y + 1e-6f);
+        cv.z = sqrtf(av.z) + logf(bv.z + 1e-6f);
+        cv.w = sqrtf(av.w) + logf(bv.w + 1e-6f);
+        c[i] = cv;
     }
 }
