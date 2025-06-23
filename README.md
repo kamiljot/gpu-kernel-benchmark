@@ -38,7 +38,6 @@ gpu-kernel-benchmark/
 ├── plot_float4_compare_avg.py     # Line plot of mean (best 10%)
 ├── README.md                      # Project description and usage
 ├── BUILD.md                       # Detailed build instructions
-├── setup.sh                       # Optional build & run helper script
 └── CMakeLists.txt                 # Build configuration (CMake)
 ```
 
