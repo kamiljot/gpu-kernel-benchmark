@@ -1,11 +1,14 @@
 #pragma once
 #include <vector>
-#include <fstream>
+#include <string>
 
-// Generates random float values for vectors a and b
-void generate_input_data(std::vector<float>& a, std::vector<float>& b);
+// Loads input vectors a and b from a binary file
+bool read_input_file(const std::string& filename,
+    std::vector<float>& a,
+    std::vector<float>& b);
 
-// Writes a single result line to the output CSV file
-void write_result(std::ofstream& out, int N, int pass,
-    double cpu_time, float time_global,
-    float time_shared, float time_float4);
+// Appends one benchmark result to CSV output file
+void append_result_to_csv(const std::string& filename,
+    const std::string& operation,
+    int N,
+    const struct BenchmarkResult& result);

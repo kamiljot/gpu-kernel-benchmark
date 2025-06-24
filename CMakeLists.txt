@@ -1,34 +1,57 @@
-cmake_minimum_required(VERSION 3.10)
-project(gpu_kernel_benchmark CUDA CXX)
+cmake_minimum_required(VERSION 3.18)
+project(gpu-kernel-benchmark LANGUAGES C CXX CUDA)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD 20)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-# Use dynamic runtime library (for MSVC)
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+# Source groups
+file(GLOB_RECURSE CORE_CPP src/*.cpp)
+list(REMOVE_ITEM CORE_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
+list(REMOVE_ITEM CORE_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/benchmark_batch.cpp")
 
-# Include directories
-include_directories(
-    include
-    ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
+file(GLOB_RECURSE CUDA_SOURCES src/*.cu)
+file(GLOB_RECURSE HEADERS include/*.h include/*.cuh)
 
-# Source files
+include_directories(include)
+
+# Executable: main benchmark
 add_executable(gpu_kernel_benchmark
     src/main.cpp
-    src/cpu_baseline.cpp
-    src/gpu_kernel.cu
-    src/gpu_memory_utils.cu
-    src/gpu_benchmark_utils.cu
-    src/benchmark_utils.cpp
+    ${CORE_CPP}
+    ${CUDA_SOURCES}
+    ${HEADERS}
 )
 
-# Link CUDA
-target_link_libraries(gpu_kernel_benchmark cuda)
+# Executable: batch benchmark
+add_executable(gpu_kernel_batch
+    src/benchmark_batch.cpp
+    ${CORE_CPP}
+    ${CUDA_SOURCES}
+    ${HEADERS}
+)
 
-# CUDA properties
+# CUDA options
+enable_language(CUDA)
+
 set_target_properties(gpu_kernel_benchmark PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
-    CUDA_STANDARD 14
+    CUDA_ARCHITECTURES 75
 )
+
+set_target_properties(gpu_kernel_batch PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_ARCHITECTURES 75
+)
+
+# Windows-specific options
+if (WIN32)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+# Output folders
+set_target_properties(gpu_kernel_benchmark PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set_target_properties(gpu_kernel_batch PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

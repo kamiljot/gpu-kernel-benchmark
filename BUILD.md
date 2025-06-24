@@ -1,98 +1,98 @@
-# Build Instructions for GPU Kernel Benchmark
 
-This document explains how to build and run the benchmark project on different platforms.
+# Build Instructions
 
----
+This project benchmarks GPU kernel variants using CUDA. It supports building and running on both **Windows** and **Linux** systems.
 
 ## Requirements
 
-- CUDA Toolkit 11.x or newer
-- CMake ≥ 3.10
-- C++17-compatible compiler:
-  - Linux/macOS: GCC or Clang
-  - Windows: MSVC (Visual Studio 2022 or newer)
-- Python 3.x with the following packages:
+- **CUDA Toolkit** (version 11.0 or newer)
+- **CMake** (version 3.18+)
+- **Python 3.8+** with:
   - `pandas`
   - `matplotlib`
   - `seaborn`
+- C++ compiler with **C++20** support:
+  - Windows: Visual Studio 2022 (with CUDA integration)
+  - Linux: `g++` or `clang++`
 
 ---
 
-## Build Steps
+## Build (Windows)
 
-### Linux / macOS / WSL
+> Recommended: Open "x64 Native Tools Command Prompt for VS 2022"
 
 ```bash
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
-```
-
-### Windows (Visual Studio)
-
-1. Open "x64 Native Tools Command Prompt for VS 2022"
-2. Run:
-
-```cmd
 mkdir build
 cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
 
----
-
-## Run the Benchmark
-
-From the `build/` directory:
+To build the debug version:
 
 ```bash
-./gpu_kernel_benchmark 100
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --config Debug
 ```
-
-- Replace `100` with the number of passes you want per input size.
-- Results will be saved in:
-  ```
-  benchmarks/results_all.csv
-  ```
 
 ---
 
-## Plot the Results
+## Build (Linux)
 
-Make sure Python and required libraries are installed:
+```bash
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+```
+
+To build the debug version:
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake --build .
+```
+
+---
+
+## Executables
+
+After building, you will get two binaries:
+
+- `gpu_kernel_benchmark` – runs a single benchmark with generated input or from file
+- `gpu_kernel_batch` – runs many passes across input sizes and saves results
+
+---
+
+## Run Examples
+
+Generate input file and run:
+
+```bash
+./gpu_kernel_benchmark sqrt_log input_file
+```
+
+Run batch benchmark:
+
+```bash
+./gpu_kernel_batch sqrt_log 100
+```
+
+> The second argument is the number of passes per input size.
+
+---
+
+## Python Plots
+
+Install required packages:
 
 ```bash
 pip install pandas matplotlib seaborn
 ```
 
-### Boxplot of all timings:
+Run plots:
 
 ```bash
 python plot_float4_compare.py
-```
-
-### Mean of best 10% (trimmed):
-
-```bash
 python plot_float4_compare_avg.py
 ```
-
-### Output files:
-
-- `benchmarks/exec_time_float4.png`
-- `benchmarks/speedup_float4.png`
-- `benchmarks/exec_time_best10.png`
-- `benchmarks/speedup_best10.png`
-
----
-
-## Notes
-
-- Use `Release` builds for accurate timing results.
-- Ensure all input sizes are divisible by 4 (required for `float4` kernels).
-- Float4 kernels are not validated for correctness — only performance.
-- This project is intended for machines with CUDA-capable GPUs.
-
----

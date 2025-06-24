@@ -1,20 +1,39 @@
 #include "benchmark_utils.h"
-#include <random>
+#include "kernel_dispatch.h"
+#include "input_generator.h"
+#include <iostream>
+#include <fstream>
 
-// Fill vectors a and b with random float values in range [0.1, 1.0]
-void generate_input_data(std::vector<float>& a, std::vector<float>& b) {
-    std::mt19937 rng(42);
-    std::uniform_real_distribution<float> dist(0.1f, 1.0f);
-    for (size_t i = 0; i < a.size(); ++i) {
-        a[i] = dist(rng);
-        b[i] = dist(rng);
+bool read_input_file(const std::string& filename,
+    std::vector<float>& a,
+    std::vector<float>& b) {
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        // Auto-generate input if file doesn't exist
+        std::cout << "Input file not found. Generating random data...\n";
+        int N = 1000000;
+        generate_random_input(N, a, b);
+        write_input_file(filename, a, b);
+        return true;
     }
+
+    int N;
+    file.read(reinterpret_cast<char*>(&N), sizeof(int));
+    a.resize(N);
+    b.resize(N);
+    file.read(reinterpret_cast<char*>(a.data()), N * sizeof(float));
+    file.read(reinterpret_cast<char*>(b.data()), N * sizeof(float));
+    return file.good();
 }
 
-// Write timing results to CSV output stream
-void write_result(std::ofstream& out, int N, int pass,
-    double cpu_time, float time_global,
-    float time_shared, float time_float4) {
-    out << N << "," << pass << "," << cpu_time << ","
-        << time_global << "," << time_shared << "," << time_float4 << "\n";
+void append_result_to_csv(const std::string& filename,
+    const std::string& operation,
+    int N,
+    const BenchmarkResult& result) {
+    std::ofstream file(filename, std::ios::app);
+    file << operation << "," << N << ","
+        << result.cpu_time << ","
+        << result.gpu_global_time << ","
+        << result.gpu_shared_time << ","
+        << result.gpu_float4_time << "\n";
 }
