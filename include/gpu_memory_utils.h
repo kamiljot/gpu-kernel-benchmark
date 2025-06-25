@@ -1,15 +1,20 @@
-#pragma once
-#include <cuda_runtime.h>
+#ifndef SIN_COS_POW_RELU_H
+#define SIN_COS_POW_RELU_H
 
-// Allocates GPU memory for input arrays a, b and output array c,
-// and copies input data from host to device.
-void allocate_and_copy(const float* a, const float* b,
-    float** d_a, float** d_b, float** d_c, int N);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-// Allocates GPU memory for float4 input arrays a, b and output array c,
-// and copies input data (already packed into float4) from host to device.
-void allocate_and_copy_vec4(const float* a, const float* b,
-    float4** d_a4, float4** d_b4, float4** d_c4, int N_vec4);
+	// Benchmark launcher functions for each kernel variant
+	float run_sin_cos_pow_relu_global(const float* a, const float* b, float* c, int N);
+	float run_sin_cos_pow_relu_shared(const float* a, const float* b, float* c, int N);
+	float run_sin_cos_pow_relu_float4(const float* a, const float* b, float* c, int N);
 
-// Frees memory for all float* device arrays.
-void free_device(float* d_a, float* d_b, float* d_c);
+	// CPU fallback implementation for reference
+	float run_cpu_sin_cos_pow_relu(const float* a, const float* b, float* c, int N);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // SIN_COS_POW_RELU_H

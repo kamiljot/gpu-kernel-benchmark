@@ -12,3 +12,10 @@ void append_result_to_csv(const std::string& filename,
     const std::string& operation,
     int N,
     const struct BenchmarkResult& result);
+
+struct BenchmarkResult {
+    float cpu_time = 0.0f;
+    float gpu_global_time = 0.0f;
+    float gpu_shared_time = 0.0f;
+    float gpu_float4_time = 0.0f;
+};

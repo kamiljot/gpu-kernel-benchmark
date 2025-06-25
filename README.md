@@ -76,29 +76,28 @@ cmake --build . --config Release
 ## Run Benchmark (Single Pass)
 
 ```bash
-./gpu_kernel_benchmark <operation> <input_file>
+./gpu_kernel_benchmark --op <operation> --variant <variant> --passes 1
 ```
 
-- If `<input_file>` does not exist, it will be auto-generated.
-- Example:
-
+Examples:
 ```bash
-./gpu_kernel_benchmark add input_file
+./gpu_kernel_benchmark --op add --variant shared
+./gpu_kernel_benchmark --op sqrt_log --variant all --passes 10
 ```
+
+- If no `--input` is given, random input will be generated.
+- Results are saved to: `benchmarks/result.csv`
 
 ## Run Benchmark (Batch Mode)
 
 ```bash
-./gpu_kernel_batch <operation> <passes>
+./gpu_kernel_batch --op <operation> --variant <variant> --passes <N>
 ```
 
-- Example: run `100` passes for `sqrt_log`:
-
+Example:
 ```bash
-./gpu_kernel_batch sqrt_log 100
+./gpu_kernel_batch --op sqrt_log --variant float4 --passes 100
 ```
-
-Results saved to `benchmarks/result.csv`
 
 ## Plot Results
 
@@ -128,6 +127,6 @@ Output files:
 - [x] Add batch mode benchmark
 - [x] Add input auto-generation
 - [x] Add Python scripts for analysis
+- [x] CLI flag for selecting individual kernel variant
 - [ ] Add more math ops (mul, sin+exp, etc.)
-- [ ] CLI flag for selecting individual kernel variant
 - [ ] JSON/HTML report export
