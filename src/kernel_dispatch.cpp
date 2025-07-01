@@ -1,7 +1,7 @@
 #include "kernel_dispatch.h"
 #include "cpu_baseline.h"
-#include "add.h"
-#include "sqrt_log.h"
+#include "kernels/add/add.h"
+#include "kernels/sqrt_log/sqrt_log.h"
 #include <stdexcept>
 
 BenchmarkResult dispatch_and_benchmark(const std::string& operation,
