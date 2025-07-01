@@ -1,3 +1,5 @@
+// Input/output utilities for reading binary input and saving results to CSV.
+
 #include "benchmark_utils.h"
 #include "kernel_dispatch.h"
 #include "input_generator.h"

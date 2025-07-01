@@ -5,7 +5,8 @@ This project benchmarks multiple GPU kernel implementations for common math oper
 ## Features
 
 - Modular design with separate kernel, launcher, and utility files
-- Support for different operations: `sqrt+log`, `add` (more to come)
+- Support for different operations: `sqrt+log`, `add`, `sin_cos_pow_relu` (more to come)
+- Easy addition of new kernels via automated code generation script
 - Three GPU variants per operation:
   - Global memory access
   - Shared memory
@@ -15,53 +16,14 @@ This project benchmarks multiple GPU kernel implementations for common math oper
 - Python scripts for plotting results
 - Optional batch mode benchmarking with configurable passes
 
-## Project Structure
+## Project Structure (Overview)
 
-```
-gpu-kernel-benchmark/
-├── include/                       # Header files
-│   ├── add.h
-│   ├── benchmark_utils.h
-│   ├── cpu_baseline.h
-│   ├── gpu_benchmark_utils.h
-│   ├── gpu_memory_utils.h
-│   ├── input_generator.h
-│   ├── kernel_dispatch.h
-│   ├── sqrt_log.h
-│   └── timer.hpp
-│
-├── src/                          # Source files
-│   ├── main.cpp                  # Single-run benchmark mode
-│   ├── benchmark_batch.cpp       # Batch mode: run many samples per size
-│   ├── benchmark_utils.cpp       # CSV and input helpers
-│   ├── cpu_baseline.cpp          # CPU fallback version
-│   ├── gpu_memory_utils.cu       # GPU malloc/copy utilities
-│   ├── input_generator.cpp       # Input data generation
-│   ├── kernel_dispatch.cpp       # Dispatch logic for kernel variants
-│   ├── cuda_utils.cuh            # Shared CUDA macros/utilities
-│   └── kernels/
-│       ├── add/
-│       │   ├── add_kernels.cu
-│       │   ├── add_kernels.cuh
-│       │   └── add_launcher.cu
-│       └── sqrt_log/
-│           ├── sqrt_log_kernels.cu
-│           ├── sqrt_log_kernels.cuh
-│           └── sqrt_log_launcher.cu
-│
-├── benchmarks/                   # Output CSVs and plots
-│   ├── result.csv
-│   ├── exec_time_float4.png
-│   ├── exec_time_best10.png
-│   ├── speedup_float4.png
-│   └── speedup_best10.png
-│
-├── plot_float4_compare.py        # Full boxplot comparison
-├── plot_float4_compare_avg.py    # Best 10% mean line plot
-├── README.md
-├── BUILD.md                      # Build instructions
-└── CMakeLists.txt
-```
+- `include/` — Public header files  
+- `src/` — Source files, including kernels and utilities  
+- `src/kernels/` — Separate directories for each kernel operator  
+- `benchmarks/` — Generated benchmark CSV files and plots  
+- `scripts/` — Python plotting and utility scripts  
+- Build scripts and docs (`CMakeLists.txt`, `BUILD.md`, `README.md`)
 
 ## Build Instructions
 
@@ -79,7 +41,7 @@ cmake --build . --config Release
 ./gpu_kernel_benchmark <operation> <input_file>
 ```
 
-- If `<input_file>` does not exist, it will be auto-generated.
+- If `<input_file>` does not exist, it will be auto-generated.  
 - Example:
 
 ```bash
@@ -116,18 +78,58 @@ python plot_float4_compare_avg.py   # Best 10% average plot
 ```
 
 Output files:
-- `benchmarks/exec_time_float4.png`
-- `benchmarks/exec_time_best10.png`
-- `benchmarks/speedup_float4.png`
-- `benchmarks/speedup_best10.png`
 
-## TODO
+- `benchmarks/exec_time_float4.png`  
+- `benchmarks/exec_time_best10.png`  
+- `benchmarks/speedup_float4.png`  
+- `benchmarks/speedup_best10.png`  
 
-- [x] Modular file separation by operation
-- [x] Benchmark shared memory and float4
-- [x] Add batch mode benchmark
-- [x] Add input auto-generation
-- [x] Add Python scripts for analysis
-- [ ] Add more math ops (mul, sin+exp, etc.)
-- [ ] CLI flag for selecting individual kernel variant
-- [ ] JSON/HTML report export
+---
+
+## How to add a new kernel operator
+
+   ```bash
+   python3 new_kernel_op.py sin_cos_pow_relu
+   ```
+This project is designed to be easily extensible by adding new GPU kernel operators.
+
+### Steps to add a new kernel operator:
+
+1. Run the provided script to generate boilerplate files:
+
+   ```bash
+   python3 new_kernel_op.py <kernel_name>
+   ```
+
+   Replace `<kernel_name>` with your desired operator name, e.g.:
+
+   ```bash
+   python3 new_kernel_op.py sin_cos_pow_relu
+   ```
+
+2. The script will create a new directory under `src/kernels/<kernel_name>/` containing the following files:
+
+   - `<kernel_name>.h` — Host launcher declarations  
+   - `<kernel_name>_kernels.cuh` — Device kernel declarations  
+   - `<kernel_name>_kernels.cu` — CUDA kernel implementations with template functions  
+   - `<kernel_name>_launcher.cu` — Host launcher implementations with function templates  
+
+3. Implement your kernels and launcher functions inside the generated files.
+
+4. The build system automatically detects all kernel source files under `src/kernels/` and includes them in the build. No need to manually edit build files.
+
+5. Add support for your new operator in `kernel_dispatch.cpp` so it can be invoked via the CLI.
+
+---
+
+## Planned Improvements
+
+The project roadmap includes:
+
+- Adding more math operations (mul, sin+exp, etc.)  
+- CLI support for individual kernel variant selection  
+- JSON/HTML report generation  
+
+---
+
+Author: Kamil Jatkowski, 2025

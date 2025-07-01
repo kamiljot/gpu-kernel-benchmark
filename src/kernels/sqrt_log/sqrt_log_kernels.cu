@@ -1,3 +1,5 @@
+// CUDA kernel implementations for the "sqrt_log" operation: global memory, shared memory, and float4 variants.
+
 #include "sqrt_log_kernels.cuh"
 #include <math.h>
 

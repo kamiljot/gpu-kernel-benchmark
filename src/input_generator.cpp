@@ -1,3 +1,5 @@
+// Random input generation and binary file I/O for benchmarks.
+
 #include "input_generator.h"
 #include <fstream>
 #include <random>

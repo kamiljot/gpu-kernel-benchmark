@@ -1,3 +1,5 @@
+// CUDA kernel implementations for the "add" operation: global memory, shared memory, and float4 variants.
+
 #include "add_kernels.cuh"
 
 __global__ void add_global_kernel(const float* a, const float* b, float* c, int N) {

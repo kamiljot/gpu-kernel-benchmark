@@ -1,3 +1,5 @@
+// Utilities for CUDA memory allocation, copy, and free.
+
 #pragma once
 #include <cuda_runtime.h>
 

@@ -1,9 +1,14 @@
+// Implements dispatch_and_benchmark: runs CPU and all GPU kernel variants for the selected operation.
+
 #include "kernel_dispatch.h"
 #include "cpu_baseline.h"
 #include "kernels/add/add.h"
 #include "kernels/sqrt_log/sqrt_log.h"
 #include <stdexcept>
+#include "kernels/sin_cos_pow_relu/sin_cos_pow_relu.h"
 
+// Dispatches and benchmarks all variants (CPU, global, shared, float4) for the selected operation.
+// Throws std::invalid_argument if the operation is not supported.
 BenchmarkResult dispatch_and_benchmark(const std::string& operation,
     const float* a, const float* b, float* c, int N) {
     BenchmarkResult result;
@@ -20,9 +25,15 @@ BenchmarkResult dispatch_and_benchmark(const std::string& operation,
         result.gpu_shared_time = run_sqrt_log_shared(a, b, c, N);
         result.gpu_float4_time = run_sqrt_log_float4(a, b, c, N);
     }
-    else {
+
+    else if (operation == "sin_cos_pow_relu") {
+        result.cpu_time = run_cpu_sin_cos_pow_relu(a, b, c, N);
+        result.gpu_global_time = run_sin_cos_pow_relu_global(a, b, c, N);
+        result.gpu_shared_time = run_sin_cos_pow_relu_shared(a, b, c, N);
+        result.gpu_float4_time = run_sin_cos_pow_relu_float4(a, b, c, N);
+    }
+else {
         throw std::invalid_argument("Unknown operation: " + operation);
     }
-
     return result;
 }

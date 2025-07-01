@@ -1,3 +1,5 @@
+// Batch-mode benchmark runner: runs benchmarks for multiple input sizes and saves results to CSV.
+
 #include "benchmark_utils.h"
 #include "kernel_dispatch.h"
 #include "input_generator.h"
@@ -7,13 +9,24 @@
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <operation>\n";
+        std::cerr << "Usage: " << argv[0] << " <operation> [passes]\n";
         return 1;
     }
 
     std::string operation = argv[1];
+
+    int passes = 100; // default number of passes
+    if (argc >= 3) {
+        try {
+            passes = std::stoi(argv[2]);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Invalid passes argument: " << argv[2] << "\nUsing default passes = 100\n";
+            passes = 100;
+        }
+    }
+
     std::vector<int> sizes = { 1000, 10000, 100000, 1000000, 10000000 };
-    int passes = 100;
 
     for (int N : sizes) {
         for (int pass = 1; pass <= passes; ++pass) {

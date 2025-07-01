@@ -1,3 +1,5 @@
+// GPU benchmarking helpers: kernel launches
+
 #pragma once
 #include <cuda_runtime.h>  
 

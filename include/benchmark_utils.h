@@ -1,3 +1,5 @@
+// Input/output utilities for benchmark runs and CSV result logging.
+
 #pragma once
 #include <vector>
 #include <string>

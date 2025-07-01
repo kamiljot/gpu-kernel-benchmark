@@ -1,3 +1,5 @@
+// Implements device memory allocation, deallocation, and copy routines for GPU arrays.
+
 #include "gpu_memory_utils.h"
 
 void allocate_and_copy(const float* a, const float* b, float** d_a, float** d_b, float** d_c, int N) {
