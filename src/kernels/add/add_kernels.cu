@@ -1,5 +1,7 @@
 // CUDA kernel implementations for the "add" operation: global memory, shared memory, and float4 variants.
 
+#pragma once
+
 #include "add_kernels.cuh"
 
 __global__ void add_global_kernel(const float* a, const float* b, float* c, int N) {
@@ -9,17 +11,21 @@ __global__ void add_global_kernel(const float* a, const float* b, float* c, int 
     }
 }
 
+// Shared memory kernel: loads input into shared memory for improved memory access efficiency.
 __global__ void add_shared_kernel(const float* a, const float* b, float* c, int N) {
     __shared__ float s_a[256];
     __shared__ float s_b[256];
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
-    int t = threadIdx.x;
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int tid = threadIdx.x;
 
-    if (i < N) {
-        s_a[t] = a[i];
-        s_b[t] = b[i];
-        __syncthreads();
-        c[i] = s_a[t] + s_b[t];
+    // Load elements into shared memory, pad with zero if out of range
+    s_a[tid] = (idx < N) ? a[idx] : 0.0f;
+    s_b[tid] = (idx < N) ? b[idx] : 0.0f;
+
+    __syncthreads(); // Synchronize to ensure all loads complete
+
+    if (idx < N) {
+        c[idx] = s_a[tid] + s_b[tid];
     }
 }
 

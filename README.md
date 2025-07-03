@@ -11,6 +11,8 @@ This project benchmarks multiple GPU kernel implementations for common math oper
   - Global memory access
   - Shared memory
   - float4 vectorization
+- Persistent kernel launchers that execute kernels internally multiple times to reduce CPU-GPU call overhead and improve measurement accuracy
+- Support for selecting kernel variant via `--variant` CLI flag (e.g., `--variant global`, `shared`, `float4`, or `all`)
 - Automatic input data generation if missing
 - CSV logging of benchmark results
 - Python scripts for plotting results
@@ -126,8 +128,7 @@ This project is designed to be easily extensible by adding new GPU kernel operat
 
 The project roadmap includes:
 
-- Adding more math operations (mul, sin+exp, etc.)  
-- CLI support for individual kernel variant selection  
+- Adding more math operations (mul, sin+exp, etc.) 
 - JSON/HTML report generation  
 
 ---

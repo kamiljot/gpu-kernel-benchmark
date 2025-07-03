@@ -13,8 +13,7 @@ struct BenchmarkResult {
 
 // Dispatches the requested operation (e.g., "add", "sqrt_log"), runs CPU and GPU kernels,
 // and returns their execution times (ms) in a BenchmarkResult struct.
-// a, b: input arrays
-// c: output array
-// N: number of elements
+// variant: "global", "shared", "float4", or "all" (default) to select kernel variant(s).
 BenchmarkResult dispatch_and_benchmark(const std::string& operation,
-    const float* a, const float* b, float* c, int N);
+    const float* a, const float* b, float* c, int N,
+    const std::string& variant = "all");
