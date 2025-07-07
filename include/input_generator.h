@@ -1,8 +1,8 @@
 // Tools for random input generation for benchmark data.
 
 #pragma once
-#include <vector>
 #include <string>
+#include <vector>
 
 // Generates N random float inputs for vectors a and b
 void generate_random_input(int N, std::vector<float>& a, std::vector<float>& b);
