@@ -1,24 +1,25 @@
-// Implements host launchers for all sin_cos_pow_relu kernel variants.
+// Implements host launchers for all sin_cos_pow_relu kernel variants (global, shared, float4).
 
-#include "sin_cos_pow_relu.h"
-#include "sin_cos_pow_relu_kernels.cuh"
+#pragma once
+
 #include <cuda_runtime.h>
-#include "../../cuda_utils.cuh"
 #include <stdexcept>
 #include <iostream>
+#include "sin_cos_pow_relu_kernels.cuh"
+#include "sin_cos_pow_relu.h"
+#include "../../cuda_utils.cuh"
+#include "../../../include/cuda_launch_config.h"
 
-// Runs the global memory sin_cos_pow_relu kernel and measures execution time.
 extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, float* c, int N) {
     float time_ms = -1.0f;
 
     try {
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
 
-        int blockSize = 256;
-        int gridSize = (N + blockSize - 1) / blockSize;
+        CudaLaunchConfig config = get_launch_config(N);
 
         time_ms = launch_kernel_multiple_times([&]() {
-            sin_cos_pow_relu_global_kernel<<<gridSize, blockSize>>>(d_a, d_b, d_c, N);
+            sin_cos_pow_relu_global_kernel << <config.blocks_per_grid, config.threads_per_block >> > (d_a, d_b, d_c, N);
             CHECK_CUDA(cudaGetLastError());
             }, 1);
 
@@ -32,20 +33,17 @@ extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, flo
     return time_ms;
 }
 
-
-// Runs the shared memory sin_cos_pow_relu kernel and measures execution time.
 extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, float* c, int N) {
     float time_ms = -1.0f;
 
     try {
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
 
-        int blockSize = 256;
-        int gridSize = (N + blockSize - 1) / blockSize;
-        size_t sharedMemSize = 2 * blockSize * sizeof(float);
+        CudaLaunchConfig config = get_launch_config(N);
+        size_t sharedMemSize = 2 * config.threads_per_block * sizeof(float);
 
         time_ms = launch_kernel_multiple_times([&]() {
-            sin_cos_pow_relu_shared_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_a, d_b, d_c, N);
+            sin_cos_pow_relu_shared_kernel << <config.blocks_per_grid, config.threads_per_block, sharedMemSize >> > (d_a, d_b, d_c, N);
             CHECK_CUDA(cudaGetLastError());
             }, 1);
 
@@ -59,46 +57,37 @@ extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, flo
     return time_ms;
 }
 
-// Runs the float4 vectorized sin_cos_pow_relu kernel and measures execution time.
 extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, float* c, int N) {
-    int padded_N = (N + 3) / 4 * 4;
-    int N_vec4 = padded_N / 4;
+    if (N % 4 != 0) {
+        throw std::invalid_argument("Input size N must be divisible by 4 for float4 kernel.");
+    }
 
-    // Pack input arrays to float4 vectors
+    int N_vec4 = N / 4;
     auto h_a4 = pack_and_pad_to_float4(a, N);
     auto h_b4 = pack_and_pad_to_float4(b, N);
 
     float4* d_a4 = nullptr;
     float4* d_b4 = nullptr;
     float4* d_c4 = nullptr;
-    float ms = -1.0f;
+
+    float time_ms = -1.0f;
 
     try {
         std::tie(d_a4, d_b4, d_c4) = allocate_and_copy_to_device_float4(h_a4.data(), h_b4.data(), N_vec4);
 
-        cudaEvent_t start, stop;
-        CHECK_CUDA(cudaEventCreate(&start));
-        CHECK_CUDA(cudaEventCreate(&stop));
+        CudaLaunchConfig config = get_launch_config(N_vec4);
 
-        int blockSize = 256;
-        int gridSize = (N_vec4 + blockSize - 1) / blockSize;
-
-        CHECK_CUDA(cudaEventRecord(start));
-        sin_cos_pow_relu_float4_kernel << <gridSize, blockSize >> > (d_a4, d_b4, d_c4, N_vec4);
-        CHECK_CUDA(cudaEventRecord(stop));
-
-        CHECK_CUDA(cudaEventSynchronize(stop));
-        CHECK_CUDA(cudaEventElapsedTime(&ms, start, stop));
+        time_ms = launch_kernel_multiple_times([&]() {
+            sin_cos_pow_relu_float4_kernel << <config.blocks_per_grid, config.threads_per_block >> > (d_a4, d_b4, d_c4, N_vec4);
+            CHECK_CUDA(cudaGetLastError());
+            }, 1);
 
         copy_from_device_and_free_float4(c, d_c4, d_a4, d_b4, N_vec4);
-
-        cudaEventDestroy(start);
-        cudaEventDestroy(stop);
     }
     catch (const std::exception& e) {
         std::cerr << "CUDA error in run_sin_cos_pow_relu_float4: " << e.what() << std::endl;
         return -1.0f;
     }
 
-    return ms;
+    return time_ms;
 }

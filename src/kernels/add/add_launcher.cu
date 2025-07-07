@@ -8,6 +8,7 @@
 #include "add_kernels.cuh"
 #include "add.h"
 #include "../../cuda_utils.cuh"
+#include "../../../include/cuda_launch_config.h"
 
 // Launches the global memory version of the add kernel and measures execution time
 extern "C" float run_add_global(const float* a, const float* b, float* c, int N) {
@@ -17,12 +18,12 @@ extern "C" float run_add_global(const float* a, const float* b, float* c, int N)
         // Allocate device memory and copy input data
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
 
-        int blockSize = 256;
-        int gridSize = (N + blockSize - 1) / blockSize;
+        // Get CUDA launch configuration
+        CudaLaunchConfig config = get_launch_config(N);
 
         // Launch kernel and measure execution time
         time_ms = launch_kernel_multiple_times([&]() {
-            add_global_kernel<<<gridSize, blockSize>>>(d_a, d_b, d_c, N);
+            add_global_kernel << <config.blocks_per_grid, config.threads_per_block >> > (d_a, d_b, d_c, N);
             CHECK_CUDA(cudaGetLastError());
             }, 1);
 
@@ -45,13 +46,13 @@ extern "C" float run_add_shared(const float* a, const float* b, float* c, int N)
         // Allocate device memory and copy input data
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
 
-        int blockSize = 256;
-        int gridSize = (N + blockSize - 1) / blockSize;
-        size_t sharedMemSize = 2 * blockSize * sizeof(float); // For two arrays in shared memory
+        // Get CUDA launch configuration
+        CudaLaunchConfig config = get_launch_config(N);
+        size_t sharedMemSize = 2 * config.threads_per_block * sizeof(float); // For two arrays in shared memory
 
         // Launch kernel and measure execution time
         time_ms = launch_kernel_multiple_times([&]() {
-            add_shared_kernel<<<gridSize, blockSize, sharedMemSize>>>(d_a, d_b, d_c, N);
+            add_shared_kernel << <config.blocks_per_grid, config.threads_per_block, sharedMemSize >> > (d_a, d_b, d_c, N);
             CHECK_CUDA(cudaGetLastError());
             }, 1);
 
@@ -87,12 +88,12 @@ extern "C" float run_add_float4(const float* a, const float* b, float* c, int N)
         // Allocate device memory and copy input data
         std::tie(d_a4, d_b4, d_c4) = allocate_and_copy_to_device_float4(h_a4.data(), h_b4.data(), N_vec4);
 
-        int blockSize = 256;
-        int gridSize = (N_vec4 + blockSize - 1) / blockSize;
+        // Get CUDA launch configuration
+        CudaLaunchConfig config = get_launch_config(N_vec4);
 
         // Measure kernel execution time
         time_ms = launch_kernel_multiple_times([&]() {
-            add_float4_kernel << <gridSize, blockSize >> > (d_a4, d_b4, d_c4, N_vec4);
+            add_float4_kernel << <config.blocks_per_grid, config.threads_per_block >> > (d_a4, d_b4, d_c4, N_vec4);
             CHECK_CUDA(cudaGetLastError());
             }, 1);
 
