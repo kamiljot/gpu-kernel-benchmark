@@ -4,7 +4,8 @@
 #include <string>
 
 // Holds timing results for CPU and various GPU implementations.
-struct BenchmarkResult {
+struct BenchmarkResult
+{
     float cpu_time = 0.0f;
     float gpu_global_time = 0.0f;
     float gpu_shared_time = 0.0f;
@@ -14,6 +15,5 @@ struct BenchmarkResult {
 // Dispatches the requested operation (e.g., "add", "sqrt_log"), runs CPU and GPU kernels,
 // and returns their execution times (ms) in a BenchmarkResult struct.
 // variant: "global", "shared", "float4", or "all" (default) to select kernel variant(s).
-BenchmarkResult dispatch_and_benchmark(const std::string& operation,
-    const float* a, const float* b, float* c, int N,
-    const std::string& variant = "all");
+BenchmarkResult dispatch_and_benchmark(const std::string& operation, const float* a, const float* b, float* c, int N,
+                                       const std::string& variant = "all");

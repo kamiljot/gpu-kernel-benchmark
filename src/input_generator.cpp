@@ -1,16 +1,19 @@
 // Random input generation and binary file I/O for benchmarks.
 
 #include "input_generator.h"
-#include <fstream>
-#include <random>
-#include <iostream>
 
-void generate_random_input(int N, std::vector<float>& a, std::vector<float>& b) {
+#include <fstream>
+#include <iostream>
+#include <random>
+
+void generate_random_input(int N, std::vector<float>& a, std::vector<float>& b)
+{
     std::mt19937 gen(42);
     std::uniform_real_distribution<float> dist(0.01f, 10.0f);
     a.resize(N);
     b.resize(N);
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < N; ++i)
+    {
         a[i] = dist(gen);
         b[i] = dist(gen);
     }
@@ -18,9 +21,11 @@ void generate_random_input(int N, std::vector<float>& a, std::vector<float>& b) 
     std::cout << "Generated N = " << N << "\n";
 }
 
-void write_input_file(const std::string& filename, const std::vector<float>& a, const std::vector<float>& b) {
+void write_input_file(const std::string& filename, const std::vector<float>& a, const std::vector<float>& b)
+{
     std::ofstream file(filename, std::ios::binary);
-    if (!file) {
+    if (!file)
+    {
         throw std::runtime_error("Failed to open file for writing: " + filename);
     }
 

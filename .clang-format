@@ -1,0 +1,13 @@
+BasedOnStyle: Google
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AllowShortFunctionsOnASingleLine: false
+ColumnLimit: 120
+SortIncludes: true
+BreakBeforeBraces: Allman
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+SpacesInAngles: false
+SpacesInContainerLiterals: true
+PointerAlignment: Left
