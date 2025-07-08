@@ -1,7 +1,17 @@
-// CUDA kernel implementations for {{name}} kernels.
+/**
+ * @file    {{name}}_kernels.cu
+ * @brief   CUDA kernel implementations for {{name}} kernels (global, shared, float4).
+ * @author  Kamil J.
+ * @date    {{date}}
+ *
+ * Implements CUDA device kernels for the '{{name}}' operation in all supported variants.
+ */
 
 #include "{{name}}_kernels.cuh"
 
+/**
+ * @brief Global memory kernel for '{{name}}' operation.
+ */
 __global__ void
 {
     {
@@ -18,6 +28,9 @@ _global_kernel(const float* a, const float* b, float* c, int N)
     }
 }
 
+/**
+ * @brief Shared memory kernel for '{{name}}' operation.
+ */
 __global__ void
 {
     {
@@ -35,6 +48,9 @@ _shared_kernel(const float* a, const float* b, float* c, int N)
     }
 }
 
+/**
+ * @brief float4 vectorized kernel for '{{name}}' operation.
+ */
 __global__ void
 {
     {

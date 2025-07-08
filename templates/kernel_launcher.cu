@@ -1,4 +1,11 @@
-// Implements host launchers for all {{name}} kernel variants (global, shared, float4).
+/**
+ * @file    {{name}}_launcher.cu
+ * @brief   Implements host launchers for all {{name}} kernel variants (global, shared, float4).
+ * @author  Kamil J.
+ * @date    {{date}}
+ *
+ * Provides host functions to launch all {{name}} kernel variants, measuring their execution time.
+ */
 
 #pragma once
 
@@ -7,12 +14,14 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "../../../Include/cuda_launch_config.h"
+#include "../../../include/cuda_launch_config.h"
 #include "../../cuda_utils.cuh"
 #include "{{name}}.h"
 #include "{{name}}_kernels.cuh"
 
-// Launches the global memory version of the {{name}} kernel and measures execution time
+/**
+ * @brief Launches the global memory version of the {{name}} kernel and measures execution time.
+ */
 extern "C" float run_
 {
     {
@@ -53,7 +62,9 @@ _global(const float* a, const float* b, float* c, int N)
     return time_ms;
 }
 
-// Launches the shared memory version of the {{name}} kernel and measures execution time
+/**
+ * @brief Launches the shared memory version of the {{name}} kernel and measures execution time.
+ */
 extern "C" float run_
 {
     {
@@ -95,7 +106,9 @@ _shared(const float* a, const float* b, float* c, int N)
     return time_ms;
 }
 
-// Launches the float4 vectorized version of the {{name}} kernel and measures execution time
+/**
+ * @brief Launches the float4 vectorized version of the {{name}} kernel and measures execution time.
+ */
 extern "C" float run_
 {
     {
