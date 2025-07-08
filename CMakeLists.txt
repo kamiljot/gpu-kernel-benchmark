@@ -55,3 +55,8 @@ set_target_properties(gpu_kernel_benchmark PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set_target_properties(gpu_kernel_batch PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_executable(test_add_correctness tests/test_add_correctness.cpp)
+target_include_directories(test_add_correctness PRIVATE include)
+target_link_libraries(test_add_correctness cuda)
+add_test(NAME AddCorrectnessTest COMMAND test_add_correctness)

@@ -1,0 +1,30 @@
+name: Build & Test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ python3
+
+      - name: Build project
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make -j
+
+      - name: Run simple test
+        run: |
+          ./build/main add || exit 1
+
+      - name: Run correctness test
+        run: |
+          ./build/test_add_correctness
