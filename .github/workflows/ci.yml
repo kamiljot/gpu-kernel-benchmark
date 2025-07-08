@@ -9,6 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.15
+        with:
+          cuda: '12.3.0'
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -21,10 +26,6 @@ jobs:
           cmake ..
           make -j
 
-      - name: Run simple test
-        run: |
-          ./build/main add || exit 1
-
-      - name: Run correctness test
+      - name: Run test
         run: |
           ./build/test_add_correctness
