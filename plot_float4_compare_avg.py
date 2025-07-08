@@ -1,3 +1,16 @@
+"""
+plot_float4_compare_avg.py
+--------------------------
+Plots average (mean of best 10%) execution times and speedups for CPU and GPU kernel benchmarks.
+
+- Loads results from CSV
+- Filters for best 10% times per input size (trimming slow outliers)
+- Plots log-log execution time and linear speedup charts
+
+Author: Kamil J.
+Date: 2025-07-07
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -9,16 +22,25 @@ df["speedup_global"] = df["cpu_time_ms"] / df["gpu_global_ms"]
 df["speedup_shared"] = df["cpu_time_ms"] / df["gpu_shared_ms"]
 df["speedup_float4"] = df["cpu_time_ms"] / df["gpu_float4_ms"]
 
-# === TRIMMING: only keep best 10% (lowest times) ===
 def keep_best_10_percent(series):
+    """
+    Returns only the best 10% (lowest) values from a pandas Series.
+    """
     cutoff = series.quantile(0.10)
     return series[series <= cutoff]
 
-# Average best 10% per input size
 def avg_best_10(df, column):
+    """
+    Calculates the mean of the best 10% values for each input size.
+    
+    Args:
+        df (DataFrame): Benchmark results dataframe.
+        column (str): Column to process.
+    Returns:
+        Series: Mean of best 10% values for each size.
+    """
     return df.groupby("size")[column].apply(keep_best_10_percent).groupby("size").mean()
 
-# List of sizes
 sizes = sorted(df["size"].unique())
 
 # === 1. Average execution times (log scale) ===

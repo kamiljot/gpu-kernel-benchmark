@@ -1,9 +1,18 @@
-// Device kernel declarations for different {{name}} kernel variants.
+/**
+ * @file    {{name}}_kernels.cuh
+ * @brief   Device kernel declarations for different {{name}} kernel variants.
+ * @author  Kamil J.
+ * @date    {{date}}
+ *
+ * Declares CUDA device kernels for the '{{name}}' operation in all supported variants.
+ */
 
 #pragma once
 #include <cuda_runtime.h>
 
-// Global memory kernel: basic element-wise operation for {{name}}.
+/**
+ * @brief Global memory kernel: basic element-wise operation for '{{name}}'.
+ */
 __global__ void
 {
     {
@@ -12,7 +21,9 @@ __global__ void
 }
 _global_kernel(const float* a, const float* b, float* c, int N);
 
-// Shared memory kernel: uses shared memory for improved performance.
+/**
+ * @brief Shared memory kernel: uses shared memory for improved performance.
+ */
 __global__ void
 {
     {
@@ -21,7 +32,9 @@ __global__ void
 }
 _shared_kernel(const float* a, const float* b, float* c, int N);
 
-// float4 vectorized kernel: processes four elements at a time.
+/**
+ * @brief float4 vectorized kernel: processes four elements at a time.
+ */
 __global__ void
 {
     {

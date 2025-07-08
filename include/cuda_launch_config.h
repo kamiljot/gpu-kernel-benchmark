@@ -1,3 +1,12 @@
+/**
+ * @file    cuda_launch_config.h
+ * @brief   Utilities for configuring CUDA kernel launch parameters (grid and block dimensions).
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * Provides structures and functions for selecting optimal CUDA launch parameters for a given workload.
+ */
+
 #pragma once
 
 #include <cuda_runtime.h>
@@ -6,14 +15,21 @@
 #include <iostream>
 #include <stdexcept>
 
-// Structure holding CUDA kernel launch configuration parameters.
+/**
+ * @brief Structure holding CUDA kernel launch configuration parameters.
+ */
 struct CudaLaunchConfig
 {
-    int threads_per_block;  // Number of threads per block
-    int blocks_per_grid;    // Number of blocks per grid
+    int threads_per_block;  ///< Number of threads per block.
+    int blocks_per_grid;    ///< Number of blocks per grid.
 };
 
-// Returns the maximum threads per block supported by the current CUDA device.
+/**
+ * @brief Returns the maximum threads per block supported by the current CUDA device.
+ *
+ * @return Maximum number of threads per block.
+ * @throws std::runtime_error if CUDA device properties cannot be queried.
+ */
 inline int get_max_threads_per_block()
 {
     cudaDeviceProp deviceProp;
@@ -31,8 +47,13 @@ inline int get_max_threads_per_block()
     return deviceProp.maxThreadsPerBlock;
 }
 
-// Selects an optimal number of threads per block, choosing from common sizes
-// and ensuring it does not exceed the device maximum.
+/**
+ * @brief Selects an optimal number of threads per block, choosing from common sizes and ensuring it does not exceed the
+ * device maximum.
+ *
+ * @param[in] max_threads  Maximum threads supported by the device.
+ * @return                 Chosen number of threads per block.
+ */
 inline int choose_threads_per_block(int max_threads)
 {
     constexpr int preferred_sizes[] = {1024, 512, 256, 128, 64, 32};
@@ -43,8 +64,14 @@ inline int choose_threads_per_block(int max_threads)
     return 32;  // Fallback minimum thread block size
 }
 
-// Computes a CUDA launch configuration given the total workload size N.
-// Determines appropriate threads per block and blocks per grid.
+/**
+ * @brief Computes a CUDA launch configuration given the total workload size N.
+ *
+ * Determines appropriate threads per block and blocks per grid based on device limits and workload size.
+ *
+ * @param[in] N  Total number of elements to process.
+ * @return       CUDA launch configuration struct.
+ */
 inline CudaLaunchConfig get_launch_config(int N)
 {
     int max_threads = get_max_threads_per_block();

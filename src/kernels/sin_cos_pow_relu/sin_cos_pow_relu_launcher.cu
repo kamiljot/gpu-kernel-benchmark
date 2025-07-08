@@ -1,4 +1,12 @@
-// Implements host launchers for all sin_cos_pow_relu kernel variants (global, shared, float4).
+/**
+ * @file    sin_cos_pow_relu_launcher.cu
+ * @brief   Implements host launchers for all sin_cos_pow_relu kernel variants (global, shared, float4).
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * Contains host-side functions to allocate memory, launch CUDA kernels, measure execution time,
+ * and handle data transfers for all sin_cos_pow_relu kernel variants.
+ */
 
 #pragma once
 
@@ -12,6 +20,17 @@
 #include "sin_cos_pow_relu.h"
 #include "sin_cos_pow_relu_kernels.cuh"
 
+/**
+ * @brief Launches the global memory version of the sin_cos_pow_relu kernel and measures execution time.
+ *
+ * Allocates device memory, copies input data, launches the kernel, copies results back, and frees memory.
+ *
+ * @param[in]  a  Pointer to the first input array (host).
+ * @param[in]  b  Pointer to the second input array (host).
+ * @param[out] c  Pointer to the output array (host).
+ * @param[in]  N  Number of elements.
+ * @return        Kernel execution time in milliseconds, or -1.0f on error.
+ */
 extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, float* c, int N)
 {
     float time_ms = -1.0f;
@@ -41,6 +60,18 @@ extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, flo
     return time_ms;
 }
 
+/**
+ * @brief Launches the shared memory version of the sin_cos_pow_relu kernel and measures execution time.
+ *
+ * Allocates device memory, copies input data, launches the kernel with shared memory, copies results back, and frees
+ * memory.
+ *
+ * @param[in]  a  Pointer to the first input array (host).
+ * @param[in]  b  Pointer to the second input array (host).
+ * @param[out] c  Pointer to the output array (host).
+ * @param[in]  N  Number of elements.
+ * @return        Kernel execution time in milliseconds, or -1.0f on error.
+ */
 extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, float* c, int N)
 {
     float time_ms = -1.0f;
@@ -72,6 +103,19 @@ extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, flo
     return time_ms;
 }
 
+/**
+ * @brief Launches the float4 vectorized version of the sin_cos_pow_relu kernel and measures execution time.
+ *
+ * Packs input arrays into float4 vectors, allocates device memory, copies input data,
+ * launches the float4 kernel, copies results back, and frees memory.
+ *
+ * @param[in]  a  Pointer to the first input array (host).
+ * @param[in]  b  Pointer to the second input array (host).
+ * @param[out] c  Pointer to the output array (host).
+ * @param[in]  N  Number of elements (must be divisible by 4).
+ * @return        Kernel execution time in milliseconds, or -1.0f on error.
+ * @throws        std::invalid_argument if N is not divisible by 4.
+ */
 extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, float* c, int N)
 {
     if (N % 4 != 0)

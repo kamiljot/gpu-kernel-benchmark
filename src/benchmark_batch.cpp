@@ -1,4 +1,12 @@
-// Batch-mode benchmark runner: runs benchmarks for multiple input sizes and saves results to CSV.
+/**
+ * @file    benchmark_batch.cpp
+ * @brief   Batch-mode benchmark runner: runs benchmarks for multiple input sizes and saves results to CSV.
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * This program runs selected benchmark operations (CPU and various GPU kernel variants) for a set of input sizes,
+ * logs timings, and saves results to a CSV file.
+ */
 
 #include <cstring>
 #include <iostream>
@@ -9,6 +17,19 @@
 #include "input_generator.h"
 #include "kernel_dispatch.h"
 
+/**
+ * @brief Entry point for the batch-mode benchmark runner.
+ *
+ * Usage:
+ *   benchmark_batch <operation> [passes] [--variant <global|shared|float4|all>]
+ *
+ * - Runs benchmarks for a range of input sizes, a specified number of passes, and kernel variants.
+ * - Results are printed to stdout and saved to a CSV file.
+ *
+ * @param[in]  argc  Argument count.
+ * @param[in]  argv  Argument values.
+ * @return           Exit code (0 on success).
+ */
 int main(int argc, char* argv[])
 {
     if (argc < 2)
