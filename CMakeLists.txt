@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.18)
 project(gpu-kernel-benchmark LANGUAGES C CXX CUDA)
 
+find_package(CUDAToolkit REQUIRED)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 20)
@@ -56,7 +58,13 @@ set_target_properties(gpu_kernel_benchmark PROPERTIES
 set_target_properties(gpu_kernel_batch PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_executable(test_add_correctness tests/test_add_correctness.cpp)
+# Executable: test add correctness
+add_executable(test_add_correctness
+    tests/test_add_correctness.cpp
+    ${CORE_CPP}
+    ${CUDA_SOURCES}
+    ${HEADERS}
+)
 target_include_directories(test_add_correctness PRIVATE include)
-target_link_libraries(test_add_correctness cuda)
+target_link_libraries(test_add_correctness CUDA::cudart)
 add_test(NAME AddCorrectnessTest COMMAND test_add_correctness)

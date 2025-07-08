@@ -3,6 +3,7 @@
  * @brief   Quick correctness test: compares CPU and GPU output for "add" operation.
  */
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <iostream>
@@ -26,7 +27,8 @@ int main()
     double max_err = 0.0;
     for (int i = 0; i < N; ++i)
     {
-        max_err = std::max(max_err, std::abs(c_cpu[i] - c_gpu[i]));
+        double err = std::abs(static_cast<double>(c_cpu[i] - c_gpu[i]));
+        if (err > max_err) max_err = err;
     }
 
     std::cout << "Max CPU vs GPU error: " << max_err << std::endl;
