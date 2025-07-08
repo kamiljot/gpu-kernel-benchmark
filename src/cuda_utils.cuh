@@ -1,3 +1,12 @@
+/**
+ * @file    cuda_utils.cuh
+ * @brief   Utility macros, structures, and functions for CUDA memory management and benchmarking.
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * Provides helpers for device memory allocation, data transfer, kernel timing, and float4 packing.
+ */
+
 #pragma once
 #include <cuda_runtime.h>
 
@@ -7,7 +16,12 @@
 #include <tuple>
 #include <vector>
 
-// Macro for checking CUDA errors in host code.
+/**
+ * @def CHECK_CUDA(call)
+ * @brief Macro for checking CUDA errors in host code.
+ *
+ * Throws std::runtime_error if the CUDA call fails, and prints error message with file and line.
+ */
 #define CHECK_CUDA(call)                                                                               \
     do                                                                                                 \
     {                                                                                                  \
@@ -19,15 +33,23 @@
         }                                                                                              \
     } while (0)
 
-// Persistent buffer structure for managing device memory and data transfer
+/**
+ * @brief Persistent buffer structure for managing device memory and data transfer.
+ *
+ * Allows reusing allocated device memory across multiple launches.
+ */
 struct PersistentBuffer
 {
-    float* d_a = nullptr;
-    float* d_b = nullptr;
-    float* d_c = nullptr;
-    int N = 0;
-    bool initialized = false;
+    float* d_a = nullptr;      ///< Device pointer to first input
+    float* d_b = nullptr;      ///< Device pointer to second input
+    float* d_c = nullptr;      ///< Device pointer to output
+    int N = 0;                 ///< Number of elements
+    bool initialized = false;  ///< Whether buffer is allocated
 
+    /**
+     * @brief Allocates device memory for given size, freeing any previous allocation.
+     * @param size Number of elements to allocate.
+     */
     void allocate(int size)
     {
         if (initialized && size == N) return;
@@ -47,6 +69,12 @@ struct PersistentBuffer
         initialized = true;
     }
 
+    /**
+     * @brief Copies host arrays a, b to device memory, allocating if needed.
+     * @param a Host pointer to first input.
+     * @param b Host pointer to second input.
+     * @param size Number of elements.
+     */
     void copy_to_device(const float* a, const float* b, int size)
     {
         if (!initialized || size != N) allocate(size);
@@ -54,11 +82,18 @@ struct PersistentBuffer
         CHECK_CUDA(cudaMemcpy(d_b, b, size * sizeof(float), cudaMemcpyHostToDevice));
     }
 
+    /**
+     * @brief Copies device output array to host.
+     * @param c Host pointer to output.
+     */
     void copy_to_host(float* c) const
     {
         CHECK_CUDA(cudaMemcpy(c, d_c, N * sizeof(float), cudaMemcpyDeviceToHost));
     }
 
+    /**
+     * @brief Frees all device buffers.
+     */
     void free_buffers()
     {
         if (initialized)
@@ -70,13 +105,20 @@ struct PersistentBuffer
         }
     }
 
+    /// Destructor: frees device buffers
     ~PersistentBuffer()
     {
         free_buffers();
     }
 };
 
-// Measures time taken to launch and complete a kernel using CUDA events
+/**
+ * @brief Measures time taken to launch and complete a kernel using CUDA events.
+ *
+ * @tparam KernelFunc  Functor type to call the kernel.
+ * @param  kernel_call Kernel functor/lambda to launch.
+ * @return             Execution time in milliseconds.
+ */
 template <typename KernelFunc>
 float measure_kernel_time(KernelFunc kernel_call)
 {
@@ -96,7 +138,13 @@ float measure_kernel_time(KernelFunc kernel_call)
     return time_ms;
 }
 
-// Allocates device memory and copies host arrays a, b to device
+/**
+ * @brief Allocates device memory and copies host arrays a, b to device.
+ * @param[in]  a Host pointer to first input array.
+ * @param[in]  b Host pointer to second input array.
+ * @param[in]  N Number of elements.
+ * @return        Tuple of device pointers: (d_a, d_b, d_c).
+ */
 inline std::tuple<float*, float*, float*> allocate_and_copy_to_device(const float* a, const float* b, int N)
 {
     float* d_a = nullptr;
@@ -111,7 +159,14 @@ inline std::tuple<float*, float*, float*> allocate_and_copy_to_device(const floa
     return {d_a, d_b, d_c};
 }
 
-// Copies device array d_c to host array c and frees all device memory
+/**
+ * @brief Copies device array d_c to host array c and frees all device memory.
+ * @param[out] c   Host pointer to output array.
+ * @param[in]  d_c Device pointer to output array.
+ * @param[in]  d_a Device pointer to first input.
+ * @param[in]  d_b Device pointer to second input.
+ * @param[in]  N   Number of elements.
+ */
 inline void copy_from_device_and_free(float* c, float* d_c, float* d_a, float* d_b, int N)
 {
     size_t size = N * sizeof(float);
@@ -121,8 +176,13 @@ inline void copy_from_device_and_free(float* c, float* d_c, float* d_a, float* d
     CHECK_CUDA(cudaFree(d_c));
 }
 
-// float4 variants
-
+/**
+ * @brief Allocates device memory and copies host float4 arrays a, b to device.
+ * @param[in]  a      Host pointer to first input array (float4).
+ * @param[in]  b      Host pointer to second input array (float4).
+ * @param[in]  N_vec4 Number of float4 elements.
+ * @return            Tuple of device pointers: (d_a, d_b, d_c).
+ */
 inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(const float4* a, const float4* b,
                                                                                 int N_vec4)
 {
@@ -138,6 +198,14 @@ inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(
     return {d_a, d_b, d_c};
 }
 
+/**
+ * @brief Copies device float4 array d_c to host array c and frees all device memory.
+ * @param[out] c    Host pointer to output array.
+ * @param[in]  d_c  Device pointer to output array (float4).
+ * @param[in]  d_a  Device pointer to first input (float4).
+ * @param[in]  d_b  Device pointer to second input (float4).
+ * @param[in]  N_vec4  Number of float4 elements.
+ */
 inline void copy_from_device_and_free_float4(float* c, float4* d_c, float4* d_a, float4* d_b, int N_vec4)
 {
     size_t size = N_vec4 * sizeof(float4);
@@ -147,7 +215,14 @@ inline void copy_from_device_and_free_float4(float* c, float4* d_c, float4* d_a,
     CHECK_CUDA(cudaFree(d_c));
 }
 
-// Measures execution time of a kernel by launching it multiple times and averaging.
+/**
+ * @brief Measures execution time of a kernel by launching it multiple times and averaging.
+ *
+ * @tparam KernelFunc Functor type to call the kernel.
+ * @param kernel      Kernel functor/lambda to launch.
+ * @param passes      Number of launches.
+ * @return            Average execution time in milliseconds.
+ */
 template <typename KernelFunc>
 float launch_kernel_multiple_times(KernelFunc kernel, int passes)
 {
@@ -174,7 +249,15 @@ float launch_kernel_multiple_times(KernelFunc kernel, int passes)
     return total_ms / passes;
 }
 
-// Packs input float array into padded float4 vector suitable for device copy.
+/**
+ * @brief Packs input float array into padded float4 vector suitable for device copy.
+ *
+ * Pads the input to the nearest multiple of 4 and returns a vector of float4.
+ *
+ * @param[in]  data Input array.
+ * @param[in]  N    Number of elements.
+ * @return          Packed and padded vector of float4s.
+ */
 inline std::vector<float4> pack_and_pad_to_float4(const float* data, int N)
 {
     int padded_N = (N + 3) / 4 * 4;

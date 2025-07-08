@@ -1,4 +1,12 @@
-// Main program: loads/generates input, runs selected operation, logs results.
+/**
+ * @file    main.cpp
+ * @brief   Main program: loads/generates input, runs selected operation, logs results.
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * Entry point for running a selected math operation (CPU/GPU) on loaded or generated input,
+ * printing and saving results to CSV.
+ */
 
 #include <cstring>
 #include <iostream>
@@ -7,6 +15,18 @@
 #include "input_generator.h"
 #include "kernel_dispatch.h"
 
+/**
+ * @brief Entry point for single-batch benchmark program.
+ *
+ * Usage:
+ *   main [operation] [input_file] [--variant <global|shared|float4|all>]
+ *
+ * Loads input, runs the selected operation and variant(s), prints and logs results.
+ *
+ * @param[in] argc  Argument count.
+ * @param[in] argv  Argument values.
+ * @return          Exit code (0 on success).
+ */
 int main(int argc, char* argv[])
 {
     std::string operation = "add";

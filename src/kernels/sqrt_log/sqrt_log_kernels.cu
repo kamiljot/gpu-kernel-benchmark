@@ -1,9 +1,27 @@
-// CUDA kernel implementations for the "sqrt_log" operation: global memory, shared memory, and float4 variants.
+/**
+ * @file    sqrt_log_kernels.cu
+ * @brief   CUDA kernel implementations for the sqrt_log operation: global memory, shared memory, and float4 variants.
+ * @author  Kamil J.
+ * @date    2025-07-07
+ *
+ * Contains CUDA kernel implementations for the sqrt_log operation,
+ * including global memory, shared memory, and float4 vectorized variants.
+ */
 
 #include <math.h>
 
 #include "sqrt_log_kernels.cuh"
 
+/**
+ * @brief CUDA kernel for elementwise sqrt_log operation using global memory.
+ *
+ * Each output is computed as sqrt(a[i]) + log(b[i] + 1e-6).
+ *
+ * @param[in]  a  Pointer to the first input array (global memory).
+ * @param[in]  b  Pointer to the second input array (global memory).
+ * @param[out] c  Pointer to the output array (global memory).
+ * @param[in]  N  Number of elements.
+ */
 __global__ void sqrt_log_global_kernel(const float* a, const float* b, float* c, int N)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -13,6 +31,16 @@ __global__ void sqrt_log_global_kernel(const float* a, const float* b, float* c,
     }
 }
 
+/**
+ * @brief CUDA kernel for elementwise sqrt_log operation using shared memory.
+ *
+ * Loads blocks of input data into shared memory before computing sqrt and log for improved memory access.
+ *
+ * @param[in]  a  Pointer to the first input array (global memory).
+ * @param[in]  b  Pointer to the second input array (global memory).
+ * @param[out] c  Pointer to the output array (global memory).
+ * @param[in]  N  Number of elements.
+ */
 __global__ void sqrt_log_shared_kernel(const float* a, const float* b, float* c, int N)
 {
     __shared__ float s_a[256];
@@ -29,6 +57,16 @@ __global__ void sqrt_log_shared_kernel(const float* a, const float* b, float* c,
     }
 }
 
+/**
+ * @brief CUDA kernel for vectorized sqrt_log operation using float4 types.
+ *
+ * Each thread processes four elements packed in float4.
+ *
+ * @param[in]  a  Pointer to the first input array (float4, global memory).
+ * @param[in]  b  Pointer to the second input array (float4, global memory).
+ * @param[out] c  Pointer to the output array (float4, global memory).
+ * @param[in]  N  Number of float4 elements.
+ */
 __global__ void sqrt_log_float4_kernel(const float4* a, const float4* b, float4* c, int N)
 {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
