@@ -2,9 +2,9 @@ name: C++ CI (Windows/MSVC)
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ "refactor/modular-ml-ready" ]
   pull_request:
-    branches: [ "*" ]
+    branches: [ "refactor/modular-ml-ready" ]
 
 jobs:
   build-and-test:
