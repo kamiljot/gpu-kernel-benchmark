@@ -1,41 +1,12 @@
-# Ignore build directory
-build/
-.vs/
-out/
+﻿################################################################################
+# Ten plik .gitignore został utworzony automatycznie przez Microsoft(R) Visual Studio.
+################################################################################
 
-# Ignore CMake generated files
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
-
-# Ignore Visual Studio build files
-*.sln
-*.vcxproj*
-*.pdb
-*.idb
-*.ipch
-*.obj
-*.exe
-*.ilk
-*.log
-*.user
-*.opensdf
-*.sdf
-
-# Ignore compiled binaries
-*.o
-*.out
-*.a
-*.so
-*.dll
-
-# Ignore benchmarks and CSVs (optional)
-benchmarks/results_all.csv
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Plot outputs
-*.png
+/.vs
+/build
+/out/build
+/1
+/2
+/3
+/init_project.bat
+/CMakeSettings.json
