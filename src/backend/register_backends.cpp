@@ -7,9 +7,9 @@
  * Performs static registration of all compute backends.
  */
 
-#include "../include/backend/backend_registry.hpp"
-#include "cpu_backend.hpp"
- // #include "backend/cuda_backend.hpp" // For future CUDA backend
+#include "backend/backend_registry.hpp"
+#include "backend/cpu_backend.hpp"
+#include "backend/cuda_backend.hpp"
 
 namespace {
 	struct StaticBackendRegistrations {
@@ -17,9 +17,9 @@ namespace {
 			BackendRegistry::instance().register_backend("cpu", [] {
 				return std::make_unique<CpuBackend>();
 				});
-			// BackendRegistry::instance().register_backend("cuda", [] {
-			//     return std::make_unique<CudaBackend>();
-			// });
+			 BackendRegistry::instance().register_backend("cuda", [] {
+			     return std::make_unique<CudaBackend>();
+			 });
 		}
 	};
 	static StaticBackendRegistrations registrations;

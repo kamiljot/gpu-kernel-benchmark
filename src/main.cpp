@@ -19,8 +19,8 @@
 #include <utility>
 #include <algorithm>
 
-#include "include/backend/backend_registry.hpp"
-#include "include/scenarios/scenario_registry.hpp"
+#include "backend/backend_registry.hpp"
+#include "scenarios/scenario_registry.hpp"
 
  // Simple CLI helper
 std::string get_arg_value(int argc, char* argv[], const std::string& flag, const std::string& default_value = "") {
@@ -47,7 +47,12 @@ std::vector<std::pair<std::string, std::string>> parse_params(int argc, char* ar
 	return params;
 }
 
+extern void force_backend_registration();
+extern void force_kernel_registration();
+
 int main(int argc, char* argv[]) {
+	force_backend_registration();
+	force_kernel_registration();
 	std::string backend_name = get_arg_value(argc, argv, "--backend", "cpu");
 	std::string scenario_name = get_arg_value(argc, argv, "--scenario", "dummy");
 	auto params = parse_params(argc, argv);

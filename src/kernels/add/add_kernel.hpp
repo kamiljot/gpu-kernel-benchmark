@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../../include/kernels/kernel_interface.hpp"
+#include "kernels/kernel_interface.hpp"
 
  /**
   * @class   AddKernel

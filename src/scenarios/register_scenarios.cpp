@@ -7,7 +7,7 @@
  * Performs static registration of all benchmark scenarios.
  */
 
-#include "../include/scenarios/scenario_registry.hpp"
+#include "scenarios/scenario_registry.hpp"
 #include "dummy_scenario.hpp"
  // #include "scenarios/ml_batch_scenario.hpp" // Example for more advanced
 

@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "../include/scenarios/scenario_interface.hpp"
+#include "scenarios/scenario_interface.hpp"
 
  /**
   * @class   DummyScenario

@@ -7,8 +7,8 @@
  * Simple backend for CPU compute and memory operations.
  */
 
-#include "cpu_backend.hpp"
-#include "../include/kernels/kernel_registry.hpp"
+#include "backend/cpu_backend.hpp"
+#include "kernels/kernel_registry.hpp"
 #include <cstring>
 
 std::string CpuBackend::name() const {

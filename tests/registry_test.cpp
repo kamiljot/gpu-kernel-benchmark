@@ -9,8 +9,8 @@
  */
 
 #include <iostream>
-#include "../src/include/backend/backend_registry.hpp"
-#include "../src/include/scenarios/scenario_registry.hpp"
+#include "backend/backend_registry.hpp"
+#include "scenarios/scenario_registry.hpp"
 
 void force_backend_registration();
 void force_scenario_registration();
