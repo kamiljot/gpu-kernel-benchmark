@@ -1,31 +1,35 @@
 /**
  * @file    add_kernel.hpp
- * @brief   Declaration for the AddKernel CUDA kernel class.
+ * @brief   Declares the AddKernel implementation (CPU).
  * @author  Kamil J.
- * @date    2025-07-09
+ * @date    2025-07-10
+ *
+ * Example implementation of a CPU add kernel.
  */
 
 #pragma once
-#include <string>
-#include <vector>
 
-#include "kernel.hpp"
+#include "../../include/kernels/kernel_interface.hpp"
 
  /**
   * @class   AddKernel
-  * @brief   Modular CUDA kernel launcher for element-wise addition.
+  * @brief   Example implementation of the Add kernel (CPU).
   */
-class AddKernel : public Kernel
-{
+class AddKernel : public KernelInterface {
 public:
-	AddKernel() = default;
-	~AddKernel() override = default;
+	/**
+	 * @brief Get the name of the kernel ("add").
+	 * @return Name of the operation.
+	 */
+	std::string name() const override { return "add"; }
 
-	std::string name() const override
-	{
-		return "add";
-	}
-
-	void launch(const std::vector<float>& input_a, const std::vector<float>& input_b,
-		std::vector<float>& output) override;
+	/**
+	 * @brief Run the add operation on CPU.
+	 *
+	 * @param input1 Pointer to the first input buffer.
+	 * @param input2 Pointer to the second input buffer.
+	 * @param output Pointer to the output buffer.
+	 * @param size   Number of elements to process.
+	 */
+	void run(float* input1, float* input2, float* output, size_t size) override;
 };

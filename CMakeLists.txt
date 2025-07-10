@@ -1,66 +1,32 @@
-cmake_minimum_required(VERSION 3.18)
-project(gpu_kernel_benchmark LANGUAGES CXX CUDA)
+# CMakeLists.txt
+# @file    CMakeLists.txt
+# @brief   CMake build script for gpu-kernel-benchmark (full registry setup & test target).
+# @author  Kamil J.
+# @date    2025-07-10
+
+cmake_minimum_required(VERSION 3.15)
+project(gpu-kernel-benchmark)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-enable_language(CUDA)
 
-include_directories(
-    src/
-    src/core
-    src/backend
-    src/kernels
-    src/profiler
-    src/scenarios
+include_directories(include)
+
+# Library with all core implementation
+add_library(kernels
+    src/kernels/add/add_kernel.cpp
+    src/kernels/register_kernels.cpp
+
+    src/backend/cpu_backend.cpp
+    src/backend/register_backends.cpp
+
+    src/scenarios/dummy_scenario.cpp
+    src/scenarios/register_scenarios.cpp
 )
 
-# ---- Compile CUDA kernels as static libs ----
-# Helper macro for a kernel dir
-function(add_kernel_library KERNEL_NAME KERNEL_DIR)
-    file(GLOB KERNEL_SOURCES
-        "${KERNEL_DIR}/*.cpp"
-        "${KERNEL_DIR}/*.cu"
-    )
-    add_library(${KERNEL_NAME} STATIC ${KERNEL_SOURCES})
-    target_include_directories(${KERNEL_NAME} PUBLIC ${KERNEL_DIR})
-    target_link_libraries(${KERNEL_NAME} PUBLIC CUDA::cudart)
-endfunction()
+# Main CLI executable
+add_executable(gpu-kernel-benchmark src/main.cpp)
+target_link_libraries(gpu-kernel-benchmark kernels)
 
-# Add each kernel as a separate library
-add_kernel_library(add_kernel src/kernels/add)
-add_kernel_library(sin_cos_pow_relu_kernel src/kernels/sin_cos_pow_relu)
-# Add further kernels here, e.g.:
-# add_kernel_library(mul_kernel src/kernels/mul)
-
-# ---- Core and non-kernel sources ----
-file(GLOB_RECURSE CORE_SOURCES
-    src/core/*.cpp
-    src/backend/*.cpp
-    src/profiler/*.cpp
-    src/scenarios/*.cpp
-    main.cpp
-)
-
-add_executable(gpu_kernel_benchmark ${CORE_SOURCES})
-
-set_target_properties(gpu_kernel_benchmark PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES "75"
-)
-
-find_package(CUDAToolkit REQUIRED)
-target_link_libraries(gpu_kernel_benchmark
-    PRIVATE CUDA::cudart
-    add_kernel
-    sin_cos_pow_relu_kernel
-    # Add more kernel libs here
-)
-
-add_executable(test_add_kernel test_add_kernel.cpp)
-target_link_libraries(test_add_kernel PRIVATE add_kernel CUDA::cudart)
-
-if (MSVC)
-    target_compile_options(gpu_kernel_benchmark PRIVATE /W4 /WX)
-else()
-    target_compile_options(gpu_kernel_benchmark PRIVATE -Wall -Wextra -Werror)
-endif()
+# Test executable (optional, see below)
+add_executable(registry_test tests/registry_test.cpp)
+target_link_libraries(registry_test kernels)
