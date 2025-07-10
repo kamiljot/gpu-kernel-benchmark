@@ -16,7 +16,6 @@
 #include <sstream>
 #include <algorithm>
 #include <cassert>
-#include <cuda_runtime.h>
 
 #include "kernels/kernel_registry.hpp"
 #include "backend/backend_registry.hpp"
@@ -125,7 +124,6 @@ int main(int argc, char* argv[]) {
 				CpuTimer timer;
 				timer.start();
 				backend->launch_kernel(kernel_name, d_in1, d_in2, d_out, args.size);
-				cudaDeviceSynchronize(); // wait for kernel
 				timer.stop();
 				backend->copy_to_host(out.data(), d_out, args.size);
 

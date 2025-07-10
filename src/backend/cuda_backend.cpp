@@ -1,30 +1,25 @@
 /**
  * @file    cuda_backend.cpp
- * @brief   Implements CudaBackend class (simple CUDA interface).
+ * @brief   CUDA backend implementation for gpu-kernel-benchmark.
  * @author  Kamil J.
  * @date    2025-07-10
  */
 
+#ifdef USE_CUDA
+
 #include "backend/cuda_backend.hpp"
-#include "kernels/kernel_registry.hpp"
 #include <cuda_runtime.h>
-#include <iostream>
-#include <cassert>
-#include "kernels/add/add_kernel_cuda.hpp"
+#include <string>
 
+ // Kernel launcher (from add_kernel_cuda.cu)
+extern "C" void launch_cuda_add_global(float*, float*, float*, size_t);
 
-std::string CudaBackend::name() const {
-	return "cuda";
-}
+std::string CudaBackend::name() const { return "cuda"; }
 
 float* CudaBackend::allocate(size_t num_elements) {
-	float* dev_ptr = nullptr;
-	cudaError_t err = cudaMalloc(&dev_ptr, num_elements * sizeof(float));
-	if (err != cudaSuccess) {
-		std::cerr << "[CUDA] cudaMalloc failed: " << cudaGetErrorString(err) << std::endl;
-		return nullptr;
-	}
-	return dev_ptr;
+	float* ptr = nullptr;
+	cudaMalloc(&ptr, num_elements * sizeof(float));
+	return ptr;
 }
 
 void CudaBackend::free(float* ptr) {
@@ -43,9 +38,9 @@ void CudaBackend::launch_kernel(const std::string& kernel_name,
 	float* input1, float* input2, float* output, size_t size) {
 	if (kernel_name == "add_global") {
 		launch_cuda_add_global(input1, input2, output, size);
+		cudaDeviceSynchronize();
 	}
-	else {
-		std::cerr << "[CUDA] Kernel not implemented: " << kernel_name << std::endl;
-		assert(false && "Unknown CUDA kernel");
-	}
+	// TODO: add more kernels here
 }
+
+#endif // USE_CUDA

@@ -1,13 +1,12 @@
 /**
  * @file    add_kernel_cuda.cu
- * @brief   CUDA global memory variant for add kernel.
+ * @brief   CUDA global memory variant for add kernel (kernel launcher).
  * @author  Kamil J.
  * @date    2025-07-10
  */
 
 #include <cuda_runtime.h>
 #include <cstddef>
-#include "kernels/add/add_kernel_cuda.hpp"
 
 __global__
 void add_global_kernel(const float* in1, const float* in2, float* out, size_t size) {
