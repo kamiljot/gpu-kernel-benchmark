@@ -1,8 +1,3 @@
-# @file    CMakeLists.txt
-# @brief   CMake build script for gpu-kernel-benchmark (full registry setup & CUDA required).
-# @author  Kamil J.
-# @date    2025-07-10
-
 cmake_minimum_required(VERSION 3.18)
 project(gpu-kernel-benchmark LANGUAGES CXX CUDA)
 
@@ -28,27 +23,40 @@ add_library(kernels STATIC
 
     src/scenarios/dummy_scenario.cpp
     src/scenarios/register_scenarios.cpp
+
+    src/benchmark/benchmark_cpu.cpp 
+    src/benchmark/benchmark_cuda.cpp
+    src/benchmark/cli_args.cpp
+    src/benchmark/generators.cpp
+    src/benchmark/select_kernels.cpp
+    src/benchmark/result_logger.cpp
+    src/benchmark/benchmark_selection.cpp
+    src/benchmark/benchmark_dispatch.cpp
+    src/benchmark/dispatch_benchmarks.cpp
+    src/benchmark/selectors.cpp
 )
 
 set_target_properties(kernels PROPERTIES
     POSITION_INDEPENDENT_CODE ON
+    CUDA_SEPARABLE_COMPILATION ON
 )
 
-# --- Main CLI executable (benchmark runner) + CUDA kernel ---
+# --- Main CLI executable (benchmark runner) ---
 add_executable(gpu-kernel-benchmark
     src/benchmark_runner.cpp
     src/kernels/add/add_kernel_cuda.cu
 )
+
 target_link_libraries(gpu-kernel-benchmark kernels)
 
-# --- Test executable (optional) + CUDA kernel ---
+# --- Test executable (optional) ---
 add_executable(registry_test
     tests/registry_test.cpp
     src/kernels/add/add_kernel_cuda.cu
 )
+
 target_link_libraries(registry_test kernels)
 
-# CUDA-specific options for exe
 set_target_properties(gpu-kernel-benchmark PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
 )
