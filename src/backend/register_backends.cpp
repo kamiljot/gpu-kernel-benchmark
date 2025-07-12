@@ -9,21 +9,30 @@
 
 #include "backend/backend_registry.hpp"
 #include "backend/cpu_backend.hpp"
+//#ifdef USE_CUDA
 #include "backend/cuda_backend.hpp"
+//#endif
 
-namespace {
-	struct StaticBackendRegistrations {
-		StaticBackendRegistrations() {
-			BackendRegistry::instance().register_backend("cpu", [] {
-				return std::make_unique<CpuBackend>();
-				});
-			 BackendRegistry::instance().register_backend("cuda", [] {
-			     return std::make_unique<CudaBackend>();
-			 });
-		}
-	};
-	static StaticBackendRegistrations registrations;
-}
+//#ifdef USE_CUDA
+//#pragma message("CUDA backend registration compiled in!")
+//#endif
+
+namespace
+{
+struct StaticBackendRegistrations
+{
+    StaticBackendRegistrations()
+    {
+        BackendRegistry::instance().register_backend("cpu", [] { return std::make_unique<CpuBackend>(); });
+//#ifdef USE_CUDA
+        BackendRegistry::instance().register_backend("cuda", [] { return std::make_unique<CudaBackend>(); });
+//#endif
+    }
+};
+static StaticBackendRegistrations registrations;
+}  // namespace
 
 // **Force registration function**
-void force_backend_registration() {}
+void force_backend_registration()
+{
+}
