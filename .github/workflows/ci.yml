@@ -1,4 +1,4 @@
-name: C++ CI (Windows/MSVC)
+name: Build & Test
 
 on:
   push:
@@ -7,21 +7,41 @@ on:
     branches: [ "refactor/modular-ml-ready" ]
 
 jobs:
-  build-and-test:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up MSVC environment
-      uses: ilammy/msvc-dev-cmd@v1
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.15
+        with:
+          cuda: '12.3.0'
 
-    - name: Configure CMake (Ninja generator)
-      run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+      - name: Install GCC 12 and set as default
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-12 g++-12
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 20
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-12 20
+          gcc --version
 
-    - name: Build all targets
-      run: cmake --build build --config Release
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y cmake
 
-    - name: Run registry test
-      run: build/registry_test.exe
+      - name: Build project
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DUSE_CUDA=ON
+          make -j
+
+      - name: Run registry test
+        run: |
+          ./build/registry_test || ./registry_test
+
+      - name: Run CTest
+        run: |
+            cd build
+            ctest --output-on-failure 
