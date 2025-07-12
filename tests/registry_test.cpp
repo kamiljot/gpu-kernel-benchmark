@@ -39,6 +39,16 @@ int main()
         std::cout << "[FAIL] Backend 'cpu' NOT created." << std::endl;
     }
 
+    auto cuda = BackendRegistry::instance().create("cuda");
+    if (cuda)
+    {
+        std::cout << "[TEST] Backend 'cuda' created. Name: " << cuda->name() << std::endl;
+    }
+    else
+    {
+        std::cout << "[FAIL] Backend 'cuda' NOT created." << std::endl;
+    }
+
     // Test create scenario
     auto dummy = ScenarioRegistry::instance().create("dummy");
     if (dummy)
