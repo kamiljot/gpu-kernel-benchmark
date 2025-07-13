@@ -44,7 +44,7 @@ set_target_properties(kernels PROPERTIES
 # --- Main CLI executable (benchmark runner) ---
 add_executable(gpu-kernel-benchmark
     src/benchmark_runner.cpp
-    src/kernels/add/add_kernel_cuda.cu
+    src/kernels/add/add_kernel_global.cu
 )
 
 target_link_libraries(gpu-kernel-benchmark kernels)
@@ -52,7 +52,7 @@ target_link_libraries(gpu-kernel-benchmark kernels)
 # --- Test executable (optional) ---
 add_executable(registry_test
     tests/registry_test.cpp
-    src/kernels/add/add_kernel_cuda.cu
+    src/kernels/add/add_kernel_global.cu
 )
 
 target_link_libraries(registry_test kernels)

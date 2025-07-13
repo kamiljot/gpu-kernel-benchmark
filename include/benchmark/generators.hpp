@@ -7,6 +7,7 @@
 
 #pragma once
 #include <vector>
+#include <cstddef>
 
 /**
  * @brief Generates a vector of random float input data.

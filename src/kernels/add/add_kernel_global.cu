@@ -1,5 +1,5 @@
 /**
- * @file    add_kernel_cuda.cu
+ * @file    add_kernel_global.cu
  * @brief   CUDA global memory variant for add kernel (kernel launcher).
  * @author  Kamil J.
  * @date    2025-07-10
