@@ -1,4 +1,9 @@
-﻿# GPU Kernel Benchmark
+ This project is archived.  
+I'm rewriting it from scratch as `gpu-kernel-benchmark` to improve modularity, testability, and performance portability.  
+The current code remains available for reference.
+
+ 
+ # GPU Kernel Benchmark
 
 This project benchmarks multiple GPU kernel implementations for common math operations on large arrays, comparing CPU performance against different GPU memory access strategies: global memory, shared memory, and float4 vectorized memory.
 
