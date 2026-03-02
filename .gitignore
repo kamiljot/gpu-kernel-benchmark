@@ -32,6 +32,12 @@ Makefile
 
 # Ignore benchmarks and CSVs (optional)
 benchmarks/results_all.csv
+benchmarks/result.csv
+
+# Generated documentation (docs should be generated locally, not committed)
+docs/html/
+docs/latex/
+docs/xml/
 
 # Python cache
 __pycache__/
@@ -44,3 +50,17 @@ __pycache__/
 /gpu_kernel_batch.dir/Debug
 /gpu_kernel_benchmark.dir/Debug
 /test_add_correctness.dir/Debug
+/test_sqrt_log_correctness.dir/Debug
+/test_sin_cos_pow_relu_correctness.dir/Debug
+
+# IDE and build artifacts
+CMakeSettings.json
+x64/
+*.dir/
+*.bin
+
+# Temporary files
+*.tmp
+*.swp
+*~
+.DS_Store

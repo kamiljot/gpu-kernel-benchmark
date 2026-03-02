@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
 
             std::cout << "\n";
 
-            append_result_to_csv("result.csv", operation, N, result);
+            append_result_to_csv("benchmarks/result.csv", operation, N, result);
         }
     }
 

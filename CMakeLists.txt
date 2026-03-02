@@ -58,13 +58,50 @@ set_target_properties(gpu_kernel_benchmark PROPERTIES
 set_target_properties(gpu_kernel_batch PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Executable: test add correctness
+# Enable testing
+enable_testing()
+
+# Test: add correctness
 add_executable(test_add_correctness
     tests/test_add_correctness.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
     ${HEADERS}
 )
+set_target_properties(test_add_correctness PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_ARCHITECTURES 75
+)
 target_include_directories(test_add_correctness PRIVATE include)
 target_link_libraries(test_add_correctness CUDA::cudart)
 add_test(NAME AddCorrectnessTest COMMAND test_add_correctness)
+
+# Test: sqrt_log correctness
+add_executable(test_sqrt_log_correctness
+    tests/test_sqrt_log_correctness.cpp
+    ${CORE_CPP}
+    ${CUDA_SOURCES}
+    ${HEADERS}
+)
+set_target_properties(test_sqrt_log_correctness PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_ARCHITECTURES 75
+)
+target_include_directories(test_sqrt_log_correctness PRIVATE include)
+target_link_libraries(test_sqrt_log_correctness CUDA::cudart)
+add_test(NAME SqrtLogCorrectnessTest COMMAND test_sqrt_log_correctness)
+
+# Test: sin_cos_pow_relu correctness
+add_executable(test_sin_cos_pow_relu_correctness
+    tests/test_sin_cos_pow_relu_correctness.cpp
+    ${CORE_CPP}
+    ${CUDA_SOURCES}
+    ${HEADERS}
+)
+set_target_properties(test_sin_cos_pow_relu_correctness PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_ARCHITECTURES 75
+)
+target_include_directories(test_sin_cos_pow_relu_correctness PRIVATE include)
+target_link_libraries(test_sin_cos_pow_relu_correctness CUDA::cudart)
+add_test(NAME SinCosPowReluCorrectnessTest COMMAND test_sin_cos_pow_relu_correctness)

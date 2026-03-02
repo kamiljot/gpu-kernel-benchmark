@@ -1,6 +1,6 @@
 /**
- * @file    test_add_correctness.cpp
- * @brief   Correctness test: compares CPU baseline against GPU kernels for add operation.
+ * @file    test_sin_cos_pow_relu_correctness.cpp
+ * @brief   Correctness test: compares CPU baseline against GPU kernels for sin_cos_pow_relu operation.
  * @author  Kamil J.
  * @date    2025-07-07
  */
@@ -12,29 +12,29 @@
 #include <vector>
 
 #include "../include/cpu_baseline.h"
-#include "../src/kernels/add/add.h"
+#include "../src/kernels/sin_cos_pow_relu/sin_cos_pow_relu.h"
 
 int main()
 {
     const int N = 100000;
     std::vector<float> a(N), b(N);
     
-    // Initialize with random-like values
+    // Initialize with values that will produce interesting results
     for (int i = 0; i < N; ++i)
     {
-        a[i] = static_cast<float>(i % 100) * 0.1f + 1.0f;
-        b[i] = static_cast<float>((i * 7) % 100) * 0.1f + 1.0f;
+        a[i] = static_cast<float>(i % 100) * 0.1f - 5.0f;  // Range: -5 to +5
+        b[i] = static_cast<float>((i * 7) % 100) * 0.1f - 5.0f;
     }
 
     std::vector<float> c_cpu(N), c_gpu_global(N), c_gpu_shared(N), c_gpu_float4(N);
 
     // CPU baseline
-    run_cpu_add(a.data(), b.data(), c_cpu.data(), N);
+    run_cpu_sin_cos_pow_relu(a.data(), b.data(), c_cpu.data(), N);
     
     // GPU variants
-    run_add_global(a.data(), b.data(), c_gpu_global.data(), N);
-    run_add_shared(a.data(), b.data(), c_gpu_shared.data(), N);
-    run_add_float4(a.data(), b.data(), c_gpu_float4.data(), N);
+    run_sin_cos_pow_relu_global(a.data(), b.data(), c_gpu_global.data(), N);
+    run_sin_cos_pow_relu_shared(a.data(), b.data(), c_gpu_shared.data(), N);
+    run_sin_cos_pow_relu_float4(a.data(), b.data(), c_gpu_float4.data(), N);
 
     // Compare results
     auto compare = [](const std::vector<float>& ref, const std::vector<float>& test, const char* label) {
@@ -55,6 +55,6 @@ int main()
     compare(c_cpu, c_gpu_shared, "Shared");
     compare(c_cpu, c_gpu_float4, "Float4");
 
-    std::cout << "All add tests PASSED.\n";
+    std::cout << "All sin_cos_pow_relu tests PASSED.\n";
     return 0;
 }

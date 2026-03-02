@@ -43,6 +43,24 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build . --config Release
 ```
 
+**Note:** The default CUDA architecture is set to 75 (Turing). To build for your specific GPU, set:
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=XX
+```
+where `XX` is your GPU's compute capability (e.g., 75 for RTX 20xx, 86 for RTX 30xx, 89 for RTX 40xx).
+
+## Run Tests
+
+After building, run the correctness tests:
+
+```bash
+ctest --output-on-failure
+# or run individual tests:
+./bin/test_add_correctness
+./bin/test_sqrt_log_correctness
+./bin/test_sin_cos_pow_relu_correctness
+```
+
 ## Run Benchmark (Single Pass)
 
 ```bash
@@ -78,7 +96,12 @@ Generate Doxygen documentation (requires Doxygen installed):
 doxygen Doxyfile
 ```
 
-Open `docs/index.html` in your browser to view the generated API documentation.
+Open `docs/html/index.html` in your browser to view the generated API documentation.
+
+All public functions, kernel launchers, and helpers are fully documented with professional Doxygen comments in English.
+
+**Note:** Generated documentation (`docs/html/`, `docs/latex/`, etc.) is not committed to the repository. 
+Generate it locally when needed, or download from GitHub Releases for tagged versions.
 
 ## Plot Results
 
