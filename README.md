@@ -1,7 +1,6 @@
- This project is archived.  
-I'm rewriting it from scratch as `gpu-kernel-benchmark` to improve modularity, testability, and performance portability.  
-The current code remains available for reference.
+## Project status
 
+This project is actively maintained again. The previous archive notice is no longer valid. Current focus: stabilization, CLI validation, and benchmark quality improvements.
  
  # GPU Kernel Benchmark
 
@@ -98,10 +97,7 @@ doxygen Doxyfile
 
 Open `docs/html/index.html` in your browser to view the generated API documentation.
 
-All public functions, kernel launchers, and helpers are fully documented with professional Doxygen comments in English.
-
-**Note:** Generated documentation (`docs/html/`, `docs/latex/`, etc.) is not committed to the repository. 
-Generate it locally when needed, or download from GitHub Releases for tagged versions.
+All public functions, kernel launchers, and helpers are fully documented with Doxygen comments.
 
 ## Plot Results
 

@@ -35,4 +35,8 @@ jobs:
 
       - name: Run test
         run: |
-          ./build/test_add_correctness
+          if command -v nvidia-smi >/dev/null 2>&1; then
+            ./build/test_add_correctness
+          else
+            echo "No NVIDIA GPU/driver detected on this runner; skipping CUDA runtime test_add_correctness."
+          fi
