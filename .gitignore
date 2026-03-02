@@ -64,3 +64,4 @@ x64/
 *.swp
 *~
 .DS_Store
+/CTestTestfile.cmake
