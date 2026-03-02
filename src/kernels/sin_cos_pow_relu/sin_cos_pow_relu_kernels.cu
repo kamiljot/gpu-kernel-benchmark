@@ -61,7 +61,6 @@ __global__ void sin_cos_pow_relu_shared_kernel(const float* a, const float* b, f
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < N)
     {
-        // Here could be a shared memory optimized version; simple fallback:
         float val = sinf(a[idx]) + cosf(b[idx]);
         val = powf(val, 2.0f);
         c[idx] = relu(val);

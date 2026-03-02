@@ -8,7 +8,6 @@
  * and handle data transfers for all sin_cos_pow_relu kernel variants.
  */
 
-#pragma once
 
 #include <cuda_runtime.h>
 
@@ -17,13 +16,17 @@
 
 #include "../../../include/cuda_launch_config.h"
 #include "../../cuda_utils.cuh"
+#include "../../../include/benchmark_utils.h"
 #include "sin_cos_pow_relu.h"
 #include "sin_cos_pow_relu_kernels.cuh"
 
 /**
  * @brief Launches the global memory version of the sin_cos_pow_relu kernel and measures execution time.
  *
- * Allocates device memory, copies input data, launches the kernel, copies results back, and frees memory.
+ * The function performs:
+ *  - Device allocation and host-to-device copies for inputs.
+ *  - A single timed kernel launch that uses global memory for inputs/outputs.
+ *  - Device-to-host copy of the output and cleanup of device allocations.
  *
  * @param[in]  a  Pointer to the first input array (host).
  * @param[in]  b  Pointer to the second input array (host).
@@ -39,15 +42,14 @@ extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, flo
     {
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
 
+        int warmup = get_benchmark_warmup();
+        int passes = get_benchmark_passes();
+
         CudaLaunchConfig config = get_launch_config(N);
 
-        time_ms = launch_kernel_multiple_times(
-            [&]()
-            {
-                sin_cos_pow_relu_global_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a, d_b, d_c, N);
-                CHECK_CUDA(cudaGetLastError());
-            },
-            1);
+        time_ms = benchmark_kernel(
+            [&]() { sin_cos_pow_relu_global_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a, d_b, d_c, N); },
+            warmup, passes);
 
         copy_from_device_and_free(c, d_c, d_a, d_b, N);
     }
@@ -60,11 +62,110 @@ extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, flo
     return time_ms;
 }
 
+// C++ helpers using PersistentBuffer
+float run_sin_cos_pow_relu_global_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode)
+{
+    float time_ms = -1.0f;
+    try
+    {
+        static PersistentBuffer buf_internal;
+        if (!buf_internal.initialized || buf_internal.N != N) buf_internal.allocate(N);
+        if (mode == BenchmarkMode::EndToEnd) buf_internal.copy_to_device(a, b, N);
+
+        float* d_a = buf_internal.d_a;
+        float* d_b = buf_internal.d_b;
+        float* d_c = buf_internal.d_c;
+
+        CudaLaunchConfig config = get_launch_config(N);
+
+        if (mode == BenchmarkMode::KernelOnly)
+        {
+            buf_internal.copy_to_device(a, b, N);
+            time_ms = benchmark_kernel([&]() { sin_cos_pow_relu_global_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a, d_b, d_c, N); },
+                                     get_benchmark_warmup(), get_benchmark_passes());
+            buf_internal.copy_to_host(c);
+        }
+        else
+        {
+            cudaEvent_t start, stop;
+            CHECK_CUDA(cudaEventCreate(&start));
+            CHECK_CUDA(cudaEventCreate(&stop));
+            CHECK_CUDA(cudaEventRecord(start));
+            CHECK_CUDA(cudaMemcpy(d_a, a, N * sizeof(float), cudaMemcpyHostToDevice));
+            CHECK_CUDA(cudaMemcpy(d_b, b, N * sizeof(float), cudaMemcpyHostToDevice));
+            sin_cos_pow_relu_global_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a, d_b, d_c, N);
+            CHECK_CUDA(cudaMemcpy(c, d_c, N * sizeof(float), cudaMemcpyDeviceToHost));
+            CHECK_CUDA(cudaEventRecord(stop));
+            CHECK_CUDA(cudaEventSynchronize(stop));
+            CHECK_CUDA(cudaEventElapsedTime(&time_ms, start, stop));
+            CHECK_CUDA(cudaEventDestroy(start));
+            CHECK_CUDA(cudaEventDestroy(stop));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "CUDA error in run_sin_cos_pow_relu_global_with_buffer: " << e.what() << std::endl;
+        return -1.0f;
+    }
+    return time_ms;
+}
+
+float run_sin_cos_pow_relu_shared_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode)
+{
+    float time_ms = -1.0f;
+    try
+    {
+        static PersistentBuffer buf_internal;
+        if (!buf_internal.initialized || buf_internal.N != N) buf_internal.allocate(N);
+        if (mode == BenchmarkMode::EndToEnd) buf_internal.copy_to_device(a, b, N);
+
+        float* d_a = buf_internal.d_a;
+        float* d_b = buf_internal.d_b;
+        float* d_c = buf_internal.d_c;
+
+        CudaLaunchConfig config = get_launch_config(N);
+        size_t sharedMemSize = 2 * config.threads_per_block * sizeof(float);
+
+        if (mode == BenchmarkMode::KernelOnly)
+        {
+            buf_internal.copy_to_device(a, b, N);
+            time_ms = benchmark_kernel([&]() { sin_cos_pow_relu_shared_kernel<<<config.blocks_per_grid, config.threads_per_block, sharedMemSize>>>(d_a, d_b, d_c, N); },
+                                     get_benchmark_warmup(), get_benchmark_passes());
+            buf_internal.copy_to_host(c);
+        }
+        else
+        {
+            cudaEvent_t start, stop;
+            CHECK_CUDA(cudaEventCreate(&start));
+            CHECK_CUDA(cudaEventCreate(&stop));
+            CHECK_CUDA(cudaEventRecord(start));
+            CHECK_CUDA(cudaMemcpy(d_a, a, N * sizeof(float), cudaMemcpyHostToDevice));
+            CHECK_CUDA(cudaMemcpy(d_b, b, N * sizeof(float), cudaMemcpyHostToDevice));
+            sin_cos_pow_relu_shared_kernel<<<config.blocks_per_grid, config.threads_per_block, sharedMemSize>>>(d_a, d_b, d_c, N);
+            CHECK_CUDA(cudaMemcpy(c, d_c, N * sizeof(float), cudaMemcpyDeviceToHost));
+            CHECK_CUDA(cudaEventRecord(stop));
+            CHECK_CUDA(cudaEventSynchronize(stop));
+            CHECK_CUDA(cudaEventElapsedTime(&time_ms, start, stop));
+            CHECK_CUDA(cudaEventDestroy(start));
+            CHECK_CUDA(cudaEventDestroy(stop));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "CUDA error in run_sin_cos_pow_relu_shared_with_buffer: " << e.what() << std::endl;
+        return -1.0f;
+    }
+    return time_ms;
+}
+
 /**
  * @brief Launches the shared memory version of the sin_cos_pow_relu kernel and measures execution time.
  *
- * Allocates device memory, copies input data, launches the kernel with shared memory, copies results back, and frees
- * memory.
+ * The function performs:
+ *  - Device allocation and host-to-device copies for inputs.
+ *  - (Optional) warm-up and timed launches to stabilize performance and measure average runtime.
+ *  - Launches the kernel using shared memory for per-block staging of inputs.
+ *  - Copies results back to host and frees device allocations.
  *
  * @param[in]  a  Pointer to the first input array (host).
  * @param[in]  b  Pointer to the second input array (host).
@@ -76,21 +177,20 @@ extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, flo
 {
     float time_ms = -1.0f;
 
+
     try
     {
         auto [d_a, d_b, d_c] = allocate_and_copy_to_device(a, b, N);
+        int warmup = get_benchmark_warmup();
+        int passes = get_benchmark_passes();
 
         CudaLaunchConfig config = get_launch_config(N);
         size_t sharedMemSize = 2 * config.threads_per_block * sizeof(float);
 
-        time_ms = launch_kernel_multiple_times(
-            [&]()
-            {
-                sin_cos_pow_relu_shared_kernel<<<config.blocks_per_grid, config.threads_per_block, sharedMemSize>>>(
-                    d_a, d_b, d_c, N);
-                CHECK_CUDA(cudaGetLastError());
-            },
-            1);
+        time_ms = benchmark_kernel(
+            [&]() { sin_cos_pow_relu_shared_kernel<<<config.blocks_per_grid, config.threads_per_block, sharedMemSize>>>(
+                          d_a, d_b, d_c, N);
+            }, warmup, passes);
 
         copy_from_device_and_free(c, d_c, d_a, d_b, N);
     }
@@ -106,8 +206,14 @@ extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, flo
 /**
  * @brief Launches the float4 vectorized version of the sin_cos_pow_relu kernel and measures execution time.
  *
- * Packs input arrays into float4 vectors, allocates device memory, copies input data,
- * launches the float4 kernel, copies results back, and frees memory.
+ * The function performs:
+ *  - Packs input arrays into float4 vectors (host-side) and pads if necessary.
+ *  - Allocates device memory for packed vectors and copies data to device.
+ *  - Launches the vectorized kernel that processes four floats per thread.
+ *  - Copies results back to host, unpacks into scalar output, and frees device memory.
+ *
+ * Requirements:
+ *  - The input size N must be divisible by 4; otherwise std::invalid_argument is thrown.
  *
  * @param[in]  a  Pointer to the first input array (host).
  * @param[in]  b  Pointer to the second input array (host).
@@ -139,14 +245,12 @@ extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, flo
 
         CudaLaunchConfig config = get_launch_config(N_vec4);
 
-        time_ms = launch_kernel_multiple_times(
-            [&]()
-            {
-                sin_cos_pow_relu_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4,
-                                                                                                     N_vec4);
-                CHECK_CUDA(cudaGetLastError());
-            },
-            1);
+        int warmup = get_benchmark_warmup();
+        int passes = get_benchmark_passes();
+
+        time_ms = benchmark_kernel(
+            [&]() { sin_cos_pow_relu_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4, N_vec4); },
+            warmup, passes);
 
         copy_from_device_and_free_float4(c, d_c4, d_a4, d_b4, N_vec4);
     }

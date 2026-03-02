@@ -30,6 +30,7 @@ This project benchmarks multiple GPU kernel implementations for common math oper
 - `src/kernels/` — Separate directories for each kernel operator  
 - `benchmarks/` — Generated benchmark CSV files and plots  
 - `scripts/` — Python plotting and utility scripts  
+- `docs/` — Generated Doxygen documentation (HTML)
 - Build scripts and docs (`CMakeLists.txt`, `BUILD.md`, `README.md`)
 
 ## Build Instructions
@@ -45,29 +46,39 @@ cmake --build . --config Release
 ## Run Benchmark (Single Pass)
 
 ```bash
-./gpu_kernel_benchmark <operation> <input_file>
+./gpu_kernel_benchmark <operation> <input_file> [--variant <global|shared|float4|all>] [--warmup <N>] [--passes <N>] [--mode <kernel|e2e>]
 ```
 
 - If `<input_file>` does not exist, it will be auto-generated.  
 - Example:
 
 ```bash
-./gpu_kernel_benchmark add input_file
+./gpu_kernel_benchmark add input_file --variant all --warmup 20 --passes 500 --mode kernel
 ```
 
 ## Run Benchmark (Batch Mode)
 
 ```bash
-./gpu_kernel_batch <operation> <passes>
+./gpu_kernel_batch <operation> <passes> [--variant <global|shared|float4|all>] [--warmup <N>] [--mode <kernel|e2e>]
 ```
 
 - Example: run `100` passes for `sqrt_log`:
 
 ```bash
-./gpu_kernel_batch sqrt_log 100
+./gpu_kernel_batch sqrt_log 100 --variant all --warmup 20 --mode kernel
 ```
 
 Results saved to `benchmarks/result.csv`
+
+## Documentation
+
+Generate Doxygen documentation (requires Doxygen installed):
+
+```bash
+doxygen Doxyfile
+```
+
+Open `docs/index.html` in your browser to view the generated API documentation.
 
 ## Plot Results
 

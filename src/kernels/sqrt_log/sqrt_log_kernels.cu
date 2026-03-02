@@ -43,18 +43,19 @@ __global__ void sqrt_log_global_kernel(const float* a, const float* b, float* c,
  */
 __global__ void sqrt_log_shared_kernel(const float* a, const float* b, float* c, int N)
 {
-    __shared__ float s_a[256];
-    __shared__ float s_b[256];
-    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    extern __shared__ float smem[];
+    float* s_a = smem;
+    float* s_b = smem + blockDim.x;
+
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int t = threadIdx.x;
 
-    if (i < N)
-    {
-        s_a[t] = a[i];
-        s_b[t] = b[i];
-        __syncthreads();
-        c[i] = sqrtf(s_a[t]) + logf(s_b[t] + 1e-6f);
-    }
+    s_a[t] = (idx < N) ? a[idx] : 0.0f;
+    s_b[t] = (idx < N) ? b[idx] : 0.0f;
+    
+    __syncthreads();
+
+    if (idx < N) c[idx] = sqrtf(s_a[t]) + logf(s_b[t] + 1e-6f);
 }
 
 /**

@@ -21,6 +21,11 @@
 
 /**
  * @brief Launches the global memory version of the {{name}} kernel and measures execution time.
+ *
+ * The function performs:
+ *  - Device allocation and host-to-device copies for inputs.
+ *  - A single timed kernel launch that uses global memory for inputs/outputs.
+ *  - Device-to-host copy of the output and cleanup of device allocations.
  */
 extern "C" float run_
 {
@@ -64,6 +69,11 @@ _global(const float* a, const float* b, float* c, int N)
 
 /**
  * @brief Launches the shared memory version of the {{name}} kernel and measures execution time.
+ *
+ * The function performs:
+ *  - Device allocation and host-to-device copies for inputs.
+ *  - Launches the kernel using shared memory (both input arrays are staged into shared memory per block).
+ *  - Copies results back to host and frees device allocations.
  */
 extern "C" float run_
 {
@@ -108,6 +118,15 @@ _shared(const float* a, const float* b, float* c, int N)
 
 /**
  * @brief Launches the float4 vectorized version of the {{name}} kernel and measures execution time.
+ *
+ * The function performs:
+ *  - Packs input arrays into float4 vectors (host-side) and pads if necessary.
+ *  - Allocates device memory for packed vectors and copies data to device.
+ *  - Launches the vectorized kernel that processes four floats per thread.
+ *  - Copies results back to host, unpacks into scalar output, and frees device memory.
+ *
+ * Requirements:
+ *  - The input size N should be divisible by 4 for exact vectorization.
  */
 extern "C" float run_
 {

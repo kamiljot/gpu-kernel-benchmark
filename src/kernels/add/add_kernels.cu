@@ -8,7 +8,6 @@
  * form.
  */
 
-#pragma once
 
 #include "add_kernels.cuh"
 
@@ -41,21 +40,19 @@ __global__ void add_global_kernel(const float* a, const float* b, float* c, int 
  */
 __global__ void add_shared_kernel(const float* a, const float* b, float* c, int N)
 {
-    __shared__ float s_a[256];
-    __shared__ float s_b[256];
+    extern __shared__ float smem[];
+    float* s_a = smem;
+    float* s_b = smem + blockDim.x;
+
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int tid = threadIdx.x;
+    int t = threadIdx.x;
 
-    // Load elements into shared memory, pad with zero if out of range
-    s_a[tid] = (idx < N) ? a[idx] : 0.0f;
-    s_b[tid] = (idx < N) ? b[idx] : 0.0f;
+    s_a[t] = (idx < N) ? a[idx] : 0.0f;
+    s_b[t] = (idx < N) ? b[idx] : 0.0f;
 
-    __syncthreads();  // Synchronize to ensure all loads complete
+    __syncthreads();
 
-    if (idx < N)
-    {
-        c[idx] = s_a[tid] + s_b[tid];
-    }
+    if (idx < N) c[idx] = s_a[t] + s_b[t];
 }
 
 /**

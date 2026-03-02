@@ -22,17 +22,16 @@
  *
  * Throws std::runtime_error if the CUDA call fails, and prints error message with file and line.
  */
-#define CHECK_CUDA(call)                                                                               \
+#define CHECK_CUDA(call)                                                                                \
     do                                                                                                 \
     {                                                                                                  \
-        cudaError_t err = call;                                                                        \
-        if (err != cudaSuccess)                                                                        \
-        {                                                                                              \
+        cudaError_t err = call;                                                                         \
+        if (err != cudaSuccess)                                                                         \
+        {                                                                                               \
             fprintf(stderr, "CUDA error at %s:%d: %s\n", __FILE__, __LINE__, cudaGetErrorString(err)); \
-            throw std::runtime_error(cudaGetErrorString(err));                                         \
-        }                                                                                              \
+            throw std::runtime_error(cudaGetErrorString(err));                                          \
+        }                                                                                               \
     } while (0)
-
 /**
  * @brief Persistent buffer structure for managing device memory and data transfer.
  *
@@ -183,8 +182,7 @@ inline void copy_from_device_and_free(float* c, float* d_c, float* d_a, float* d
  * @param[in]  N_vec4 Number of float4 elements.
  * @return            Tuple of device pointers: (d_a, d_b, d_c).
  */
-inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(const float4* a, const float4* b,
-                                                                                int N_vec4)
+inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(const float4* a, const float4* b, int N_vec4)
 {
     float4* d_a = nullptr;
     float4* d_b = nullptr;
@@ -273,4 +271,55 @@ inline std::vector<float4> pack_and_pad_to_float4(const float* data, int N)
             make_float4(padded_data[4 * i], padded_data[4 * i + 1], padded_data[4 * i + 2], padded_data[4 * i + 3]);
     }
     return packed;
+}
+
+/**
+ * @brief Performs an unmeasured warm-up for a CUDA kernel launch callable.
+ *
+ * The function performs:
+ *  - Executes the provided kernel callable @p warmup times (not timed).
+ *  - Checks for a pending CUDA launch error.
+ *  - Synchronizes the device to ensure all warm-up work is completed before the timed phase.
+ *
+ * @tparam KernelFunc  Callable type that launches a CUDA kernel (e.g., lambda/functor).
+ * @param  kernel      Callable that launches the CUDA kernel.
+ * @param  warmup      Number of warm-up launches (may be zero).
+ *
+ * @throws std::runtime_error on CUDA error (via CHECK_CUDA).
+ */
+template <typename KernelFunc>
+inline void warmup_kernel(KernelFunc kernel, int warmup)
+{
+    for (int i = 0; i < warmup; ++i) kernel();
+    CHECK_CUDA(cudaGetLastError());
+    CHECK_CUDA(cudaDeviceSynchronize());  // ensure warm-up work is finished before timing
+}
+
+/**
+ * @brief Benchmarks a CUDA kernel launch callable using warm-up and multiple timed passes.
+ *
+ * The function performs:
+ *  - Validates input parameters (@p passes must be > 0; negative @p warmup is clamped to 0).
+ *  - Runs an unmeasured warm-up phase to reduce first-launch overhead and stabilize clocks/caches.
+ *  - Runs a timed phase consisting of @p passes kernel launches and returns the average time per launch.
+ *
+ * @tparam KernelFunc  Callable type that launches a CUDA kernel (e.g., lambda/functor).
+ * @param  kernel      Callable that launches the CUDA kernel.
+ * @param  warmup      Number of warm-up launches (not included in timing).
+ * @param  passes      Number of timed launches used to compute the average kernel time.
+ * @return             Average kernel execution time in milliseconds.
+ *
+ * @throws std::invalid_argument if @p passes <= 0.
+ * @throws std::runtime_error on CUDA error (via CHECK_CUDA).
+ */
+template <typename KernelFunc>
+inline float benchmark_kernel(KernelFunc kernel, int warmup, int passes)
+{
+    if (passes <= 0) throw std::invalid_argument("passes must be > 0");
+    if (warmup < 0) warmup = 0;
+
+    warmup_kernel(kernel, warmup);
+    // Delegate timed passes to the helper that launches the kernel multiple times
+    // and returns the average execution time per launch.
+    return launch_kernel_multiple_times(kernel, passes);
 }

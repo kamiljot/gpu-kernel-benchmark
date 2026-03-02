@@ -13,35 +13,38 @@
 /**
  * @brief CUDA kernel for elementwise sqrt_log operation using global memory.
  *
- * Each output is computed as sqrt(a[i]) + log(b[i] + 1e-6).
+ * Each thread computes: c[i] = sqrtf(a[i]) + logf(b[i] + 1e-6f).
+ * The small constant 1e-6 prevents domain errors for non-positive inputs to log.
  *
- * @param[in]  a  Pointer to the first input array (global memory).
- * @param[in]  b  Pointer to the second input array (global memory).
- * @param[out] c  Pointer to the output array (global memory).
- * @param[in]  N  Number of elements.
+ * @param[in]  a  Pointer to the first input array (device global memory).
+ * @param[in]  b  Pointer to the second input array (device global memory).
+ * @param[out] c  Pointer to the output array (device global memory).
+ * @param[in]  N  Number of elements to process.
  */
 __global__ void sqrt_log_global_kernel(const float* a, const float* b, float* c, int N);
 
 /**
  * @brief CUDA kernel for elementwise sqrt_log operation using shared memory.
  *
- * Loads data into shared memory before computing sqrt and log for improved memory access.
+ * Loads per-block tiles of data into shared memory before computing sqrt and log,
+ * improving memory access patterns and reducing global memory traffic.
  *
- * @param[in]  a  Pointer to the first input array (global memory).
- * @param[in]  b  Pointer to the second input array (global memory).
- * @param[out] c  Pointer to the output array (global memory).
- * @param[in]  N  Number of elements.
+ * @param[in]  a  Pointer to the first input array (device global memory).
+ * @param[in]  b  Pointer to the second input array (device global memory).
+ * @param[out] c  Pointer to the output array (device global memory).
+ * @param[in]  N  Number of elements to process.
  */
 __global__ void sqrt_log_shared_kernel(const float* a, const float* b, float* c, int N);
 
 /**
  * @brief CUDA kernel for vectorized sqrt_log operation using float4 types.
  *
- * Each thread processes four elements packed in float4.
+ * Each thread processes one float4 element (4 scalar floats), computing the sqrt_log
+ * expression for all four components in a vectorized manner.
  *
- * @param[in]  a  Pointer to the first input array (float4, global memory).
- * @param[in]  b  Pointer to the second input array (float4, global memory).
- * @param[out] c  Pointer to the output array (float4, global memory).
- * @param[in]  N  Number of float4 elements.
+ * @param[in]  a  Pointer to the first input array (device global memory, float4).
+ * @param[in]  b  Pointer to the second input array (device global memory, float4).
+ * @param[out] c  Pointer to the output array (device global memory, float4).
+ * @param[in]  N  Number of float4 elements to process.
  */
 __global__ void sqrt_log_float4_kernel(const float4* a, const float4* b, float4* c, int N);
