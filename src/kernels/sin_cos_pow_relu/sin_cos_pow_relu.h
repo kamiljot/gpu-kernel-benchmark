@@ -26,18 +26,6 @@ enum class BenchmarkMode;
  * @param[in]  N  Number of elements.
  * @return        Kernel execution time in milliseconds.
  */
-/**
- * @brief run_sin_cos_pow_relu_global launcher (auto-generated comment).
- *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  a  const float* a
- * @param[in]  b  const float* b
- * @param[in]  c  float* c
- * @param[in]  N  int N
- * @return        Kernel execution time in milliseconds.
- */
 extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, float* c, int N);
 
 /**
@@ -52,18 +40,6 @@ extern "C" float run_sin_cos_pow_relu_global(const float* a, const float* b, flo
  * @param[in]  b  Pointer to the second input array.
  * @param[out] c  Pointer to the output array.
  * @param[in]  N  Number of elements.
- * @return        Kernel execution time in milliseconds.
- */
-/**
- * @brief run_sin_cos_pow_relu_shared launcher (auto-generated comment).
- *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  a  const float* a
- * @param[in]  b  const float* b
- * @param[in]  c  float* c
- * @param[in]  N  int N
  * @return        Kernel execution time in milliseconds.
  */
 extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, float* c, int N);
@@ -84,18 +60,6 @@ extern "C" float run_sin_cos_pow_relu_shared(const float* a, const float* b, flo
  * @param[in]  b  Pointer to the second input array.
  * @param[out] c  Pointer to the output array.
  * @param[in]  N  Number of elements.
- * @return        Kernel execution time in milliseconds.
- */
-/**
- * @brief run_sin_cos_pow_relu_float4 launcher (auto-generated comment).
- *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  a  const float* a
- * @param[in]  b  const float* b
- * @param[in]  c  float* c
- * @param[in]  N  int N
  * @return        Kernel execution time in milliseconds.
  */
 extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, float* c, int N);
@@ -120,19 +84,6 @@ extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, flo
  * @param[in]  mode   Benchmark measurement mode (KernelOnly or EndToEnd).
  * @return            Kernel execution time in milliseconds.
  */
-/**
- * @brief run_sin_cos_pow_relu_global_with_buffer launcher (auto-generated comment).
- *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  a  const float* a
- * @param[in]  b  const float* b
- * @param[in]  c  float* c
- * @param[in]  N  int N
- * @param[in]  mode  BenchmarkMode mode
- * @return        Kernel execution time in milliseconds.
- */
 float run_sin_cos_pow_relu_global_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode);
 
 /**
@@ -154,18 +105,5 @@ float run_sin_cos_pow_relu_global_with_buffer(const float* a, const float* b, fl
  * @param[in]  N      Number of elements.
  * @param[in]  mode   Benchmark measurement mode (KernelOnly or EndToEnd).
  * @return            Kernel execution time in milliseconds.
- */
-/**
- * @brief run_sin_cos_pow_relu_shared_with_buffer launcher (auto-generated comment).
- *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  a  const float* a
- * @param[in]  b  const float* b
- * @param[in]  c  float* c
- * @param[in]  N  int N
- * @param[in]  mode  BenchmarkMode mode
- * @return        Kernel execution time in milliseconds.
  */
 float run_sin_cos_pow_relu_shared_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode);

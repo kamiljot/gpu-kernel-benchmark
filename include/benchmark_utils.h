@@ -4,98 +4,123 @@
  * @author  Kamil J.
  * @date    2025-07-07
  *
- * Provides functions for loading input data and appending benchmark results to CSV files.
+ * Provides helpers for benchmark parameter management, input loading,
+ * and benchmark result persistence.
  */
 
 #pragma once
+
 #include <string>
 #include <vector>
 
 /**
- * @brief Benchmark measurement mode: KernelOnly measures only kernel execution (no H2D/D2H),
- *        EndToEnd measures host->device copy + kernel + device->host copy.
+ * @brief Benchmark measurement mode.
+ *
+ * - KernelOnly: measures kernel execution only.
+ * - EndToEnd: measures H2D copy + kernel execution + D2H copy.
  */
-enum class BenchmarkMode { KernelOnly, EndToEnd };
+enum class BenchmarkMode
+{
+    KernelOnly,
+    EndToEnd
+};
 
-// Setter/getter for global benchmark parameters used by launchers
+struct BenchmarkResult;
+
 /**
  * @brief Sets global benchmark parameters used by launchers and helpers.
  *
- * This function stores the desired warm-up launch count, measurement passes and
- * benchmark mode (KernelOnly or EndToEnd) in a process-global location so that
- * launcher implementations can retrieve consistent parameters without changing
- * their external signatures.
- *
- * @param[in] warmup  Number of unmeasured warm-up launches to perform before timing.
- * @param[in] passes  Number of timed measurement passes to average.
- * @param[in] mode    Benchmark measurement mode (KernelOnly or EndToEnd).
+ * @param[in] warmup Number of unmeasured warm-up launches to perform before timing.
+ * @param[in] passes Number of timed measurement passes to average.
+ * @param[in] mode   Benchmark measurement mode.
  */
 void set_benchmark_params(int warmup, int passes, BenchmarkMode mode);
 
 /**
  * @brief Returns the currently configured warm-up launch count.
- *
- * Launchers call this helper to obtain the number of warm-up launches that should
- * be executed prior to timing measurements.
- *
  * @return Configured warm-up count.
  */
 int get_benchmark_warmup();
 
 /**
  * @brief Returns the currently configured number of measurement passes.
- *
- * Launchers call this helper to obtain how many timed passes they should run when
- * performing benchmark measurements.
- *
- * @return Configured measurement passes count.
+ * @return Configured measurement pass count.
  */
 int get_benchmark_passes();
 
 /**
  * @brief Returns the currently configured benchmark measurement mode.
- *
- * The mode controls whether launchers should measure only kernel execution
- * (KernelOnly) or the full host->device + kernel + device->host sequence (EndToEnd).
- *
- * @return Configured BenchmarkMode value.
+ * @return Configured benchmark mode.
  */
 BenchmarkMode get_benchmark_mode();
 
-
 /**
- * @brief Loads input vectors a and b from a binary file.
+ * @brief Loads input vectors from a binary file or generates data if the file is missing.
  *
- * The binary file is expected to contain the serialized contents of two float vectors.
- * This helper is used by the benchmark entry points to obtain input data for kernels.
+ * The expected file format is:
+ * - int32 element count N
+ * - N floats for vector a
+ * - N floats for vector b
  *
- * @param[in]  filename  Path to the input file.
- * @param[out] a         Vector to be loaded as the first input.
- * @param[out] b         Vector to be loaded as the second input.
- * @return     True if loading was successful, false otherwise.
- */
-/**
- * @brief read_input_file launcher (auto-generated comment).
+ * If the file does not exist, random input is generated and written to the same path.
  *
- * The function performs:
- *  - [Describe behavior: device allocation, copies, kernel launch, copies back].
- *
- * @param[in]  filename  const std::string& filename
- * @param[in]  a  std::vector<float>& a
- * @param[in]  b  std::vector<float>& b
- * @return        Kernel execution time in milliseconds.
+ * @param[in]  filename Input file path.
+ * @param[out] a        First input vector.
+ * @param[out] b        Second input vector.
+ * @return True on success, false on read/format failure.
  */
 bool read_input_file(const std::string& filename, std::vector<float>& a, std::vector<float>& b);
 
 /**
- * @brief Appends one benchmark result to a CSV output file.
+ * @brief Metadata written to CSV for a single benchmark run.
+ */
+struct CsvRunMetadata
+{
+    std::string timestamp_utc;   ///< ISO-8601 UTC timestamp.
+    std::string variant;         ///< global/shared/float4/all
+    BenchmarkMode mode = BenchmarkMode::KernelOnly; ///< Benchmark mode.
+    int warmup = 20;             ///< Warm-up iteration count.
+    int passes = 500;            ///< Timed iteration count.
+    std::string cuda_arch;       ///< Example: sm_86.
+    std::string gpu_name;        ///< Example: NVIDIA GeForce RTX 4060.
+    std::string driver_version;  ///< Example: 550.54.
+};
+
+/**
+ * @brief Builds benchmark run metadata (timestamp + GPU/driver info when available).
  *
- * Each row corresponds to a single benchmark run and contains timings for CPU and GPU variants.
+ * @param[in] variant Selected kernel variant.
+ * @param[in] mode    Benchmark mode.
+ * @param[in] warmup  Warm-up iteration count.
+ * @param[in] passes  Timed iteration count.
+ * @return            Populated metadata structure.
+ */
+CsvRunMetadata make_csv_run_metadata(const std::string& variant, BenchmarkMode mode, int warmup, int passes);
+
+/**
+ * @brief Appends a benchmark result row to CSV with run metadata.
  *
- * @param[in] filename    Path to the CSV file.
- * @param[in] operation   Name of the operation being benchmarked.
- * @param[in] N           Input size.
- * @param[in] result      Benchmark result struct to be appended.
+ * Creates a CSV header automatically when the file does not exist or is empty.
+ *
+ * @param[in] filename  Path to the CSV file.
+ * @param[in] operation Benchmark operation name.
+ * @param[in] N         Input size.
+ * @param[in] result    Benchmark result values.
+ * @param[in] metadata  Run metadata written to CSV columns.
  */
 void append_result_to_csv(const std::string& filename, const std::string& operation, int N,
-                          const struct BenchmarkResult& result);
+                          const BenchmarkResult& result, const CsvRunMetadata& metadata);
+
+/**
+ * @brief Backward-compatible benchmark result append (legacy format).
+ *
+ * This overload writes only:
+ * operation, N, cpu_time, gpu_global_time, gpu_shared_time, gpu_float4_time
+ *
+ * @param[in] filename  Path to the CSV file.
+ * @param[in] operation Benchmark operation name.
+ * @param[in] N         Input size.
+ * @param[in] result    Benchmark result values.
+ */
+void append_result_to_csv(const std::string& filename, const std::string& operation, int N,
+                          const BenchmarkResult& result);

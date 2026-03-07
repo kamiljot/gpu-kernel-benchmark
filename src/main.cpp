@@ -97,6 +97,7 @@ int main(int argc, char* argv[])
     if (variant == "shared" || variant == "all") std::cout << "Shared: " << result.gpu_shared_time << " ms\n";
     if (variant == "float4" || variant == "all") std::cout << "Float4: " << result.gpu_float4_time << " ms\n";
 
-    append_result_to_csv("benchmarks/result.csv", operation, static_cast<int>(a.size()), result);
+    const CsvRunMetadata metadata = make_csv_run_metadata(variant, mode, warmup, passes);
+    append_result_to_csv("benchmarks/result.csv", operation, static_cast<int>(a.size()), result, metadata);
     return 0;
 }

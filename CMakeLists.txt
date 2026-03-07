@@ -8,100 +8,75 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_STANDARD 20)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
-# Source groups
-file(GLOB_RECURSE CORE_CPP src/*.cpp)
-list(REMOVE_ITEM CORE_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
-list(REMOVE_ITEM CORE_CPP "${CMAKE_CURRENT_SOURCE_DIR}/src/benchmark_batch.cpp")
+# Overridable CUDA arch list, np.:
+# -DGPU_BENCHMARK_CUDA_ARCHITECTURES=86
+# -DGPU_BENCHMARK_CUDA_ARCHITECTURES="75;86"
+set(GPU_BENCHMARK_CUDA_ARCHITECTURES "75" CACHE STRING "CUDA architectures for all targets")
+message(STATUS "CUDA architectures: ${GPU_BENCHMARK_CUDA_ARCHITECTURES}")
 
-file(GLOB_RECURSE CUDA_SOURCES src/*.cu)
-file(GLOB_RECURSE HEADERS include/*.h include/*.cuh)
+set(CORE_CPP
+    src/benchmark_utils.cpp
+    src/cpu_baseline.cpp
+    src/input_generator.cpp
+    src/kernel_dispatch.cpp
+)
 
-include_directories(include)
+file(GLOB CUDA_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/gpu_memory_utils.cu"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernels/*/*_kernels.cu"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/kernels/*/*_launcher.cu"
+)
 
-# Executable: main benchmark
+function(configure_target target_name)
+    set_target_properties(${target_name} PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+        CUDA_ARCHITECTURES "${GPU_BENCHMARK_CUDA_ARCHITECTURES}"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
+    target_include_directories(${target_name} PRIVATE include)
+    target_link_libraries(${target_name} PRIVATE CUDA::cudart)
+endfunction()
+
 add_executable(gpu_kernel_benchmark
     src/main.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
-    ${HEADERS}
 )
+configure_target(gpu_kernel_benchmark)
 
-# Executable: batch benchmark
 add_executable(gpu_kernel_batch
     src/benchmark_batch.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
-    ${HEADERS}
 )
+configure_target(gpu_kernel_batch)
 
-# CUDA options
-enable_language(CUDA)
-
-set_target_properties(gpu_kernel_benchmark PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
-)
-
-set_target_properties(gpu_kernel_batch PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
-)
-
-# Windows-specific options
 if (WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-# Output folders
-set_target_properties(gpu_kernel_benchmark PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set_target_properties(gpu_kernel_batch PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
-# Enable testing
 enable_testing()
 
-# Test: add correctness
 add_executable(test_add_correctness
     tests/test_add_correctness.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
-    ${HEADERS}
 )
-set_target_properties(test_add_correctness PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
-)
-target_include_directories(test_add_correctness PRIVATE include)
-target_link_libraries(test_add_correctness CUDA::cudart)
+configure_target(test_add_correctness)
 add_test(NAME AddCorrectnessTest COMMAND test_add_correctness)
 
-# Test: sqrt_log correctness
 add_executable(test_sqrt_log_correctness
     tests/test_sqrt_log_correctness.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
-    ${HEADERS}
 )
-set_target_properties(test_sqrt_log_correctness PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
-)
-target_include_directories(test_sqrt_log_correctness PRIVATE include)
-target_link_libraries(test_sqrt_log_correctness CUDA::cudart)
+configure_target(test_sqrt_log_correctness)
 add_test(NAME SqrtLogCorrectnessTest COMMAND test_sqrt_log_correctness)
 
-# Test: sin_cos_pow_relu correctness
 add_executable(test_sin_cos_pow_relu_correctness
     tests/test_sin_cos_pow_relu_correctness.cpp
     ${CORE_CPP}
     ${CUDA_SOURCES}
-    ${HEADERS}
 )
-set_target_properties(test_sin_cos_pow_relu_correctness PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-    CUDA_ARCHITECTURES 75
-)
-target_include_directories(test_sin_cos_pow_relu_correctness PRIVATE include)
-target_link_libraries(test_sin_cos_pow_relu_correctness CUDA::cudart)
+configure_target(test_sin_cos_pow_relu_correctness)
 add_test(NAME SinCosPowReluCorrectnessTest COMMAND test_sin_cos_pow_relu_correctness)
