@@ -28,15 +28,13 @@ jobs:
 
       - name: Build project
         run: |
-          mkdir build
-          cd build
-          cmake ..
-          make -j
+          cmake --preset linux-ci
+          cmake --build --preset linux-ci
 
-      - name: Run test
+      - name: Run tests
         run: |
           if command -v nvidia-smi >/dev/null 2>&1; then
-            ./build/test_add_correctness
+            ctest --preset linux-ci
           else
-            echo "No NVIDIA GPU/driver detected on this runner; skipping CUDA runtime test_add_correctness."
+            echo "No NVIDIA GPU/driver detected on this runner; skipping CUDA runtime tests."
           fi
