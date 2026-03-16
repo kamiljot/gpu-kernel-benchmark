@@ -5,7 +5,7 @@ This project benchmarks GPU kernel variants using CUDA. It supports building and
 ## Requirements
 
 - **CUDA Toolkit** (version 11.0 or newer)
-- **CMake** (version 3.18+)
+- **CMake** (version 3.21+ recommended for `CMakePresets.json`)
 - **Python 3.8+** with:
   - `pandas`
   - `matplotlib`
@@ -21,36 +21,36 @@ This project benchmarks GPU kernel variants using CUDA. It supports building and
 
 > Recommended: Open "x64 Native Tools Command Prompt for VS 2022"
 
+Release build (Visual Studio generator):
+
 ```bash
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build . --config Release
+cmake --preset windows-vs2022-release
+cmake --build --preset windows-vs2022-release
 ```
 
-To build the debug version:
+Debug build:
 
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-cmake --build . --config Debug
+cmake --preset windows-vs2022-debug
+cmake --build --preset windows-vs2022-debug
 ```
 
 ---
 
 ## Build (Linux)
 
+Release build:
+
 ```bash
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
+cmake --preset linux-release
+cmake --build --preset linux-release
 ```
 
-To build the debug version:
+Debug build:
 
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Debug
-cmake --build .
+cmake --preset linux-debug
+cmake --build --preset linux-debug
 ```
 
 ---
@@ -154,8 +154,9 @@ Ensure CUDA Toolkit is installed and the `CUDA_PATH` environment variable is set
 ### Build Errors
 
 - Verify C++20 compiler support
-- Check CMake version (3.18+ required)
+- Check CMake version (3.21+ recommended when using presets)
 - Ensure CUDA compute capability matches your GPU
+- If you switched generators (e.g., `Ninja` vs `Visual Studio 17 2022`), remove old cache/build directories before reconfigure
 
 ### Runtime Errors
 
