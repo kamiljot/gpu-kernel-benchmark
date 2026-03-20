@@ -44,7 +44,7 @@ __pycache__/
 *.pyc
 
 # Plot outputs
-*.png
+/benchmarks/*.png
 /bin/Debug
 /Debug
 /gpu_kernel_batch.dir/Debug
@@ -65,4 +65,5 @@ x64/
 *~
 .DS_Store
 /CTestTestfile.cmake
-/CONTRIBUTING.md
+/input_file
+CMakeUserPresets.json
