@@ -31,7 +31,7 @@ Makefile
 *.dll
 
 # Ignore benchmarks and CSVs (optional)
-benchmarks/results_all.csv
+benchmarks/results.csv
 benchmarks/result.csv
 
 # Generated documentation (docs should be generated locally, not committed)

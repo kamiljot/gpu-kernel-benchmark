@@ -32,10 +32,12 @@
             throw std::runtime_error(cudaGetErrorString(err));                                          \
         }                                                                                               \
     } while (0)
+
 /**
  * @brief Persistent buffer structure for managing device memory and data transfer.
  *
  * Allows reusing allocated device memory across multiple launches.
+ * Non-copyable, non-movable to prevent accidental double-free of device memory.
  */
 struct PersistentBuffer
 {
@@ -44,6 +46,15 @@ struct PersistentBuffer
     float* d_c = nullptr;      ///< Device pointer to output
     int N = 0;                 ///< Number of elements
     bool initialized = false;  ///< Whether buffer is allocated
+
+    PersistentBuffer() = default;
+    ~PersistentBuffer() { free_buffers(); }
+
+    // Non-copyable, non-movable — device pointers must not be shared
+    PersistentBuffer(const PersistentBuffer&) = delete;
+    PersistentBuffer& operator=(const PersistentBuffer&) = delete;
+    PersistentBuffer(PersistentBuffer&&) = delete;
+    PersistentBuffer& operator=(PersistentBuffer&&) = delete;
 
     /**
      * @brief Allocates device memory for given size, freeing any previous allocation.
@@ -100,14 +111,11 @@ struct PersistentBuffer
             cudaFree(d_a);
             cudaFree(d_b);
             cudaFree(d_c);
+            d_a = nullptr;
+            d_b = nullptr;
+            d_c = nullptr;
             initialized = false;
         }
-    }
-
-    /// Destructor: frees device buffers
-    ~PersistentBuffer()
-    {
-        free_buffers();
     }
 };
 
@@ -160,11 +168,6 @@ inline std::tuple<float*, float*, float*> allocate_and_copy_to_device(const floa
 
 /**
  * @brief Copies device array d_c to host array c and frees all device memory.
- * @param[out] c   Host pointer to output array.
- * @param[in]  d_c Device pointer to output array.
- * @param[in]  d_a Device pointer to first input.
- * @param[in]  d_b Device pointer to second input.
- * @param[in]  N   Number of elements.
  */
 inline void copy_from_device_and_free(float* c, float* d_c, float* d_a, float* d_b, int N)
 {
@@ -177,10 +180,6 @@ inline void copy_from_device_and_free(float* c, float* d_c, float* d_a, float* d
 
 /**
  * @brief Allocates device memory and copies host float4 arrays a, b to device.
- * @param[in]  a      Host pointer to first input array (float4).
- * @param[in]  b      Host pointer to second input array (float4).
- * @param[in]  N_vec4 Number of float4 elements.
- * @return            Tuple of device pointers: (d_a, d_b, d_c).
  */
 inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(const float4* a, const float4* b, int N_vec4)
 {
@@ -198,11 +197,6 @@ inline std::tuple<float4*, float4*, float4*> allocate_and_copy_to_device_float4(
 
 /**
  * @brief Copies device float4 array d_c to host array c and frees all device memory.
- * @param[out] c    Host pointer to output array.
- * @param[in]  d_c  Device pointer to output array (float4).
- * @param[in]  d_a  Device pointer to first input (float4).
- * @param[in]  d_b  Device pointer to second input (float4).
- * @param[in]  N_vec4  Number of float4 elements.
  */
 inline void copy_from_device_and_free_float4(float* c, float4* d_c, float4* d_a, float4* d_b, int N_vec4)
 {
@@ -215,11 +209,6 @@ inline void copy_from_device_and_free_float4(float* c, float4* d_c, float4* d_a,
 
 /**
  * @brief Measures execution time of a kernel by launching it multiple times and averaging.
- *
- * @tparam KernelFunc Functor type to call the kernel.
- * @param kernel      Kernel functor/lambda to launch.
- * @param passes      Number of launches.
- * @return            Average execution time in milliseconds.
  */
 template <typename KernelFunc>
 float launch_kernel_multiple_times(KernelFunc kernel, int passes)
@@ -249,12 +238,6 @@ float launch_kernel_multiple_times(KernelFunc kernel, int passes)
 
 /**
  * @brief Packs input float array into padded float4 vector suitable for device copy.
- *
- * Pads the input to the nearest multiple of 4 and returns a vector of float4.
- *
- * @param[in]  data Input array.
- * @param[in]  N    Number of elements.
- * @return          Packed and padded vector of float4s.
  */
 inline std::vector<float4> pack_and_pad_to_float4(const float* data, int N)
 {
@@ -275,42 +258,17 @@ inline std::vector<float4> pack_and_pad_to_float4(const float* data, int N)
 
 /**
  * @brief Performs an unmeasured warm-up for a CUDA kernel launch callable.
- *
- * The function performs:
- *  - Executes the provided kernel callable @p warmup times (not timed).
- *  - Checks for a pending CUDA launch error.
- *  - Synchronizes the device to ensure all warm-up work is completed before the timed phase.
- *
- * @tparam KernelFunc  Callable type that launches a CUDA kernel (e.g., lambda/functor).
- * @param  kernel      Callable that launches the CUDA kernel.
- * @param  warmup      Number of warm-up launches (may be zero).
- *
- * @throws std::runtime_error on CUDA error (via CHECK_CUDA).
  */
 template <typename KernelFunc>
 inline void warmup_kernel(KernelFunc kernel, int warmup)
 {
     for (int i = 0; i < warmup; ++i) kernel();
     CHECK_CUDA(cudaGetLastError());
-    CHECK_CUDA(cudaDeviceSynchronize());  // ensure warm-up work is finished before timing
+    CHECK_CUDA(cudaDeviceSynchronize());
 }
 
 /**
  * @brief Benchmarks a CUDA kernel launch callable using warm-up and multiple timed passes.
- *
- * The function performs:
- *  - Validates input parameters (@p passes must be > 0; negative @p warmup is clamped to 0).
- *  - Runs an unmeasured warm-up phase to reduce first-launch overhead and stabilize clocks/caches.
- *  - Runs a timed phase consisting of @p passes kernel launches and returns the average time per launch.
- *
- * @tparam KernelFunc  Callable type that launches a CUDA kernel (e.g., lambda/functor).
- * @param  kernel      Callable that launches the CUDA kernel.
- * @param  warmup      Number of warm-up launches (not included in timing).
- * @param  passes      Number of timed launches used to compute the average kernel time.
- * @return             Average kernel execution time in milliseconds.
- *
- * @throws std::invalid_argument if @p passes <= 0.
- * @throws std::runtime_error on CUDA error (via CHECK_CUDA).
  */
 template <typename KernelFunc>
 inline float benchmark_kernel(KernelFunc kernel, int warmup, int passes)
@@ -319,7 +277,5 @@ inline float benchmark_kernel(KernelFunc kernel, int warmup, int passes)
     if (warmup < 0) warmup = 0;
 
     warmup_kernel(kernel, warmup);
-    // Delegate timed passes to the helper that launches the kernel multiple times
-    // and returns the average execution time per launch.
     return launch_kernel_multiple_times(kernel, passes);
 }

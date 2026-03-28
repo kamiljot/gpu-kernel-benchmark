@@ -1,15 +1,15 @@
 ## Project status
 
 This project is actively maintained again. The previous archive notice is no longer valid. Current focus: stabilization, CLI validation, and benchmark quality improvements.
- 
- # GPU Kernel Benchmark
+
+# GPU Kernel Benchmark
 
 This project benchmarks multiple GPU kernel implementations for common math operations on large arrays, comparing CPU performance against different GPU memory access strategies: global memory, shared memory, and float4 vectorized memory.
 
 ## Features
 
 - Modular design with separate kernel, launcher, and utility files
-- Support for different operations: `sqrt+log`, `add`, `sin_cos_pow_relu` (more to come)
+- Support for different operations: `sqrt_log`, `add`, `sin_cos_pow_relu` (more to come)
 - Easy addition of new kernels via automated code generation script
 - Three GPU variants per operation:
   - Global memory access
@@ -28,7 +28,8 @@ This project benchmarks multiple GPU kernel implementations for common math oper
 - `src/` — Source files, including kernels and utilities  
 - `src/kernels/` — Separate directories for each kernel operator  
 - `benchmarks/` — Generated benchmark CSV files and plots  
-- `scripts/` — Python plotting and utility scripts  
+- `scripts/` — Python plotting and code generation scripts  
+- `templates/` — Code generation templates for new kernel operators  
 - `docs/` — Generated Doxygen documentation (HTML)
 - Build scripts and docs (`CMakeLists.txt`, `BUILD.md`, `README.md`)
 
@@ -44,7 +45,7 @@ cmake --build . --config Release
 
 **Note:** The default CUDA architecture is set to 75 (Turing). To build for your specific GPU, set:
 ```bash
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=XX
+cmake .. -DCMAKE_BUILD_TYPE=Release -DGPU_BENCHMARK_CUDA_ARCHITECTURES=XX
 ```
 where `XX` is your GPU's compute capability (e.g., 75 for RTX 20xx, 86 for RTX 30xx, 89 for RTX 40xx).
 
@@ -110,8 +111,8 @@ pip install pandas matplotlib seaborn
 Generate charts:
 
 ```bash
-python plot_float4_compare.py       # Boxplot
-python plot_float4_compare_avg.py   # Best 10% average plot
+python scripts/plot_float4_compare.py       # Boxplot
+python scripts/plot_float4_compare_avg.py   # Best 10% average plot
 ```
 
 Output files:
@@ -126,7 +127,7 @@ Output files:
 ## How to add a new kernel operator
 
    ```bash
-   python3 new_kernel_op.py sin_cos_pow_relu
+   python3 scripts/new_kernel_op.py sin_cos_pow_relu
    ```
 This project is designed to be easily extensible by adding new GPU kernel operators.
 
@@ -135,13 +136,13 @@ This project is designed to be easily extensible by adding new GPU kernel operat
 1. Run the provided script to generate boilerplate files:
 
    ```bash
-   python3 new_kernel_op.py <kernel_name>
+   python3 scripts/new_kernel_op.py <kernel_name>
    ```
 
    Replace `<kernel_name>` with your desired operator name, e.g.:
 
    ```bash
-   python3 new_kernel_op.py sin_cos_pow_relu
+   python3 scripts/new_kernel_op.py sin_cos_pow_relu
    ```
 
 2. The script will create a new directory under `src/kernels/<kernel_name>/` containing the following files:

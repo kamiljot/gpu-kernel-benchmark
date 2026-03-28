@@ -15,16 +15,28 @@
 #include "input_generator.h"
 #include "kernel_dispatch.h"
 
+namespace
+{
+bool is_valid_operation(const std::string& op)
+{
+    return op == "add" || op == "sqrt_log" || op == "sin_cos_pow_relu";
+}
+
+bool is_valid_variant(const std::string& v)
+{
+    return v == "global" || v == "shared" || v == "float4" || v == "all";
+}
+
+void print_usage(const char* exe)
+{
+    std::cout << "Usage:\n"
+              << "  " << exe << " <operation> <input_file> [--variant <global|shared|float4|all>]\n"
+              << "       [--warmup <N>] [--passes <N>] [--mode <kernel|e2e>] [--help]\n";
+}
+} // namespace
+
 /**
  * @brief Entry point for single-batch benchmark program.
- *
- * Command line usage:
- *   main [operation] [input_file] [--variant <global|shared|float4|all>]
- *        [--warmup <N>] [--passes <N>] [--mode <kernel|e2e>]
- *
- * The program loads input from a binary file (or generates random input if the file is missing),
- * dispatches the selected operation to CPU and GPU kernels, measures execution times, and prints
- * results to stdout and appends them to a CSV file.
  *
  * @param argc  Argument count.
  * @param argv  Argument values.
@@ -32,48 +44,85 @@
  */
 int main(int argc, char* argv[])
 {
-    std::string operation = "add";
-    std::string input_path = "input_file.bin";
+    if (argc < 2 || std::string(argv[1]) == "--help")
+    {
+        print_usage(argv[0]);
+        return argc < 2 ? 1 : 0;
+    }
+
+    std::string operation = argv[1];
+    std::string input_path = (argc >= 3 && std::string(argv[2]).rfind("--", 0) != 0) ? argv[2] : "input_file.bin";
     std::string variant = "all";
     int warmup = 20;
     int passes = 500;
     BenchmarkMode mode = BenchmarkMode::KernelOnly;
 
-    if (argc >= 2) operation = argv[1];
-    if (argc >= 3) input_path = argv[2];
+    int start_idx = (argc >= 3 && std::string(argv[2]).rfind("--", 0) != 0) ? 3 : 2;
 
     // Parse optional --variant, --warmup, --passes, --mode arguments
-    for (int i = 3; i < argc; ++i)
+    for (int i = start_idx; i < argc; ++i)
     {
         if (strcmp(argv[i], "--variant") == 0 && i + 1 < argc)
         {
-            variant = argv[i + 1];
-            i++;
+            variant = argv[++i];
         }
         else if (strcmp(argv[i], "--warmup") == 0 && i + 1 < argc)
         {
-            warmup = std::stoi(argv[i + 1]);
-            i++;
+            warmup = std::stoi(argv[++i]);
         }
         else if (strcmp(argv[i], "--passes") == 0 && i + 1 < argc)
         {
-            passes = std::stoi(argv[i + 1]);
-            i++;
+            passes = std::stoi(argv[++i]);
         }
         else if (strcmp(argv[i], "--mode") == 0 && i + 1 < argc)
         {
-            std::string m = argv[i + 1];
+            std::string m = argv[++i];
             if (m == "kernel") mode = BenchmarkMode::KernelOnly;
             else if (m == "e2e") mode = BenchmarkMode::EndToEnd;
-            i++;
+            else
+            {
+                std::cerr << "Invalid --mode value: " << m << " (expected: kernel|e2e)\n";
+                return 1;
+            }
         }
+        else if (strcmp(argv[i], "--help") == 0)
+        {
+            print_usage(argv[0]);
+            return 0;
+        }
+        else
+        {
+            std::cerr << "Unknown argument: " << argv[i] << "\n";
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+
+    if (!is_valid_operation(operation))
+    {
+        std::cerr << "Invalid operation: " << operation
+                  << " (expected: add|sqrt_log|sin_cos_pow_relu)\n";
+        return 1;
+    }
+
+    if (!is_valid_variant(variant))
+    {
+        std::cerr << "Invalid variant: " << variant
+                  << " (expected: global|shared|float4|all)\n";
+        return 1;
+    }
+
+    if (passes <= 0 || warmup < 0)
+    {
+        std::cerr << "Invalid numeric values: passes must be > 0 and warmup >= 0\n";
+        return 1;
     }
 
     std::vector<float> a, b;
     if (!read_input_file(input_path, a, b))
     {
         std::cout << "Input file not found. Generating random data...\n";
-        int N = 1000;
+        const int N = 1000000;
         generate_random_input(N, a, b);
         write_input_file(input_path, a, b);
     }

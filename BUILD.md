@@ -116,7 +116,7 @@ Generate HTML documentation:
 doxygen Doxyfile
 ```
 
-Open `docs/index.html` in your browser to view the API documentation.
+Open `docs/html/index.html` in your browser to view the API documentation.
 
 All functions are documented with:
 - Function purpose and behavior
@@ -137,8 +137,8 @@ pip install pandas matplotlib seaborn
 Run plots:
 
 ```bash
-python plot_float4_compare.py
-python plot_float4_compare_avg.py
+python scripts/plot_float4_compare.py
+python scripts/plot_float4_compare_avg.py
 ```
 
 Generated plots will be saved in the `benchmarks/` directory.

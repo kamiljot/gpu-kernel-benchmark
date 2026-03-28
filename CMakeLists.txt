@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.21)
 project(gpu-kernel-benchmark LANGUAGES C CXX CUDA)
 
 find_package(CUDAToolkit REQUIRED)
@@ -22,7 +22,6 @@ set(CORE_CPP
 )
 
 file(GLOB CUDA_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/gpu_memory_utils.cu"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/kernels/*/*_kernels.cu"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/kernels/*/*_launcher.cu"
 )

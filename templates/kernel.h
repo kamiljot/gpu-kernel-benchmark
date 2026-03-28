@@ -9,6 +9,9 @@
 
 #pragma once
 
+// Lightweight forward declaration to avoid including heavy headers in kernel headers
+enum class BenchmarkMode;
+
 /**
  * @brief Runs the global memory {{name}} kernel.
  *
@@ -18,13 +21,7 @@
  * @param[in]  N  Number of elements.
  * @return        Kernel execution time in milliseconds.
  */
-extern "C" float run_
-{
-    {
-        name
-    }
-}
-_global(const float* a, const float* b, float* c, int N);
+extern "C" float run_{{name}}_global(const float* a, const float* b, float* c, int N);
 
 /**
  * @brief Runs the shared memory {{name}} kernel.
@@ -35,13 +32,7 @@ _global(const float* a, const float* b, float* c, int N);
  * @param[in]  N  Number of elements.
  * @return        Kernel execution time in milliseconds.
  */
-extern "C" float run_
-{
-    {
-        name
-    }
-}
-_shared(const float* a, const float* b, float* c, int N);
+extern "C" float run_{{name}}_shared(const float* a, const float* b, float* c, int N);
 
 /**
  * @brief Runs the float4 vectorized {{name}} kernel.
@@ -52,10 +43,14 @@ _shared(const float* a, const float* b, float* c, int N);
  * @param[in]  N  Number of elements.
  * @return        Kernel execution time in milliseconds.
  */
-extern "C" float run_
-{
-    {
-        name
-    }
-}
-_float4(const float* a, const float* b, float* c, int N);
+extern "C" float run_{{name}}_float4(const float* a, const float* b, float* c, int N);
+
+/**
+ * @brief Runs the global memory {{name}} kernel using a persistent device buffer.
+ */
+float run_{{name}}_global_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode);
+
+/**
+ * @brief Runs the shared memory {{name}} kernel using a persistent device buffer.
+ */
+float run_{{name}}_shared_with_buffer(const float* a, const float* b, float* c, int N, BenchmarkMode mode);
