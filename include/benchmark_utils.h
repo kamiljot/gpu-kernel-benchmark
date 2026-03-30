@@ -28,6 +28,28 @@ enum class BenchmarkMode
 struct BenchmarkResult;
 
 /**
+ * @brief Safely parses a string to int, returning false on failure.
+ *
+ * Rejects trailing non-numeric characters (e.g. "123abc") and
+ * handles out-of-range values gracefully.
+ *
+ * @param[in]  str  String to parse.
+ * @param[out] out  Parsed integer value (unchanged on failure).
+ * @return True if parsing succeeded, false otherwise.
+ */
+bool safe_stoi(const std::string& str, int& out);
+
+/**
+ * @brief Ensures that the parent directory of a file path exists, creating it if needed.
+ *
+ * Uses the non-throwing overload of create_directories so that a failure
+ * (e.g., read-only path) degrades gracefully instead of aborting the program.
+ *
+ * @param[in] filepath Path to the file whose parent directory should exist.
+ */
+void ensure_parent_directory_exists(const std::string& filepath);
+
+/**
  * @brief Sets global benchmark parameters used by launchers and helpers.
  *
  * @param[in] warmup Number of unmeasured warm-up launches to perform before timing.

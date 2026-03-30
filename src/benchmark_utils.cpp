@@ -82,7 +82,13 @@ static void ensure_parent_directory_exists(const std::string& filepath)
     std::filesystem::path p(filepath);
     if (p.has_parent_path())
     {
-        std::filesystem::create_directories(p.parent_path());
+        std::error_code ec;
+        std::filesystem::create_directories(p.parent_path(), ec);
+        if (ec)
+        {
+            std::cerr << "Warning: could not create directory '"
+                      << p.parent_path().string() << "': " << ec.message() << "\n";
+        }
     }
 }
 
@@ -220,4 +226,18 @@ void append_result_to_csv(const std::string& filename, const std::string& operat
          << result.gpu_global_time << ","
          << result.gpu_shared_time << ","
          << result.gpu_float4_time << "\n";
+}
+
+bool safe_stoi(const std::string& str, int& out)
+{
+    try
+    {
+        size_t pos = 0;
+        out = std::stoi(str, &pos);
+        return pos == str.size();
+    }
+    catch (...)
+    {
+        return false;
+    }
 }
