@@ -75,9 +75,13 @@ static bool should_write_csv_header(const std::string& filename)
 
 /**
  * @brief Ensures that the parent directory of a file path exists, creating it if needed.
+ *
+ * Uses the non-throwing overload of create_directories so that a failure
+ * (e.g., read-only path) degrades gracefully instead of aborting the benchmark.
+ *
  * @param[in] filepath Path to the file whose parent directory should exist.
  */
-static void ensure_parent_directory_exists(const std::string& filepath)
+void ensure_parent_directory_exists(const std::string& filepath)
 {
     std::filesystem::path p(filepath);
     if (p.has_parent_path())
