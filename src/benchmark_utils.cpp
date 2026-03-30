@@ -75,14 +75,24 @@ static bool should_write_csv_header(const std::string& filename)
 
 /**
  * @brief Ensures that the parent directory of a file path exists, creating it if needed.
+ *
+ * Uses the non-throwing overload of create_directories so that a failure
+ * (e.g., read-only path) degrades gracefully instead of aborting the benchmark.
+ *
  * @param[in] filepath Path to the file whose parent directory should exist.
  */
-static void ensure_parent_directory_exists(const std::string& filepath)
+void ensure_parent_directory_exists(const std::string& filepath)
 {
     std::filesystem::path p(filepath);
     if (p.has_parent_path())
     {
-        std::filesystem::create_directories(p.parent_path());
+        std::error_code ec;
+        std::filesystem::create_directories(p.parent_path(), ec);
+        if (ec)
+        {
+            std::cerr << "Warning: could not create directory '"
+                      << p.parent_path().string() << "': " << ec.message() << "\n";
+        }
     }
 }
 
@@ -220,4 +230,23 @@ void append_result_to_csv(const std::string& filename, const std::string& operat
          << result.gpu_global_time << ","
          << result.gpu_shared_time << ","
          << result.gpu_float4_time << "\n";
+}
+
+bool safe_stoi(const std::string& str, int& out)
+{
+    try
+    {
+        size_t pos = 0;
+        int value = std::stoi(str, &pos);
+        if (pos != str.size())
+        {
+            return false;
+        }
+        out = value;
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
 }
