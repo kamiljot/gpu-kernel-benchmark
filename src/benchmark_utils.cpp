@@ -9,6 +9,7 @@
 
 #include <chrono>
 #include <ctime>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -72,6 +73,19 @@ static bool should_write_csv_header(const std::string& filename)
     return in.peek() == std::ifstream::traits_type::eof();
 }
 
+/**
+ * @brief Ensures that the parent directory of a file path exists, creating it if needed.
+ * @param[in] filepath Path to the file whose parent directory should exist.
+ */
+static void ensure_parent_directory_exists(const std::string& filepath)
+{
+    std::filesystem::path p(filepath);
+    if (p.has_parent_path())
+    {
+        std::filesystem::create_directories(p.parent_path());
+    }
+}
+
 void set_benchmark_params(int warmup, int passes, BenchmarkMode mode)
 {
     g_benchmark_warmup = warmup;
@@ -99,11 +113,7 @@ bool read_input_file(const std::string& filename, std::vector<float>& a, std::ve
     std::ifstream file(filename, std::ios::binary);
     if (!file)
     {
-        std::cout << "Input file not found. Generating random data...\n";
-        const int N = 1000000;
-        generate_random_input(N, a, b);
-        write_input_file(filename, a, b);
-        return true;
+        return false;
     }
 
     int N = 0;
@@ -160,6 +170,7 @@ CsvRunMetadata make_csv_run_metadata(const std::string& variant, BenchmarkMode m
 void append_result_to_csv(const std::string& filename, const std::string& operation, int N,
                           const BenchmarkResult& result, const CsvRunMetadata& metadata)
 {
+    ensure_parent_directory_exists(filename);
     const bool write_header = should_write_csv_header(filename);
 
     std::ofstream file(filename, std::ios::app);
@@ -194,6 +205,8 @@ void append_result_to_csv(const std::string& filename, const std::string& operat
 void append_result_to_csv(const std::string& filename, const std::string& operation, int N,
                           const BenchmarkResult& result)
 {
+    ensure_parent_directory_exists(filename);
+
     std::ofstream file(filename, std::ios::app);
     if (!file.is_open())
     {

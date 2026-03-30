@@ -45,10 +45,10 @@ __global__ void sin_cos_pow_relu_global_kernel(const float* a, const float* b, f
 }
 
 /**
- * @brief CUDA kernel for sin_cos_pow_relu using shared memory (not fully optimized).
+ * @brief CUDA kernel for sin_cos_pow_relu using shared memory.
  *
- * Applies sin, cos, pow, and ReLU operations elementwise on the inputs.
- * Currently this kernel does not utilize shared memory for computation (fallback).
+ * Stages per-block tiles of input data into shared memory before computing
+ * the sin/cos/pow/relu expression, improving memory access locality.
  *
  * @param[in]  a  Pointer to the first input array (global memory).
  * @param[in]  b  Pointer to the second input array (global memory).
@@ -58,10 +58,20 @@ __global__ void sin_cos_pow_relu_global_kernel(const float* a, const float* b, f
 __global__ void sin_cos_pow_relu_shared_kernel(const float* a, const float* b, float* c, int N)
 {
     extern __shared__ float shmem[];
+    float* s_a = shmem;
+    float* s_b = shmem + blockDim.x;
+
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int t = threadIdx.x;
+
+    s_a[t] = (idx < N) ? a[idx] : 0.0f;
+    s_b[t] = (idx < N) ? b[idx] : 0.0f;
+
+    __syncthreads();
+
     if (idx < N)
     {
-        float val = sinf(a[idx]) + cosf(b[idx]);
+        float val = sinf(s_a[t]) + cosf(s_b[t]);
         val = powf(val, 2.0f);
         c[idx] = relu(val);
     }
