@@ -237,8 +237,13 @@ bool safe_stoi(const std::string& str, int& out)
     try
     {
         size_t pos = 0;
-        out = std::stoi(str, &pos);
-        return pos == str.size();
+        int value = std::stoi(str, &pos);
+        if (pos != str.size())
+        {
+            return false;
+        }
+        out = value;
+        return true;
     }
     catch (...)
     {
