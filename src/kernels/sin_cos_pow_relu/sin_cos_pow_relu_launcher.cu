@@ -226,7 +226,8 @@ extern "C" float run_sin_cos_pow_relu_float4(const float* a, const float* b, flo
 {
     if (N % 4 != 0)
     {
-        throw std::invalid_argument("Input size N must be divisible by 4 for float4 kernel.");
+        std::cerr << "Error: N must be divisible by 4 for float4 kernel (got " << N << ")\n";
+        return -1.0f;
     }
 
     int N_vec4 = N / 4;
