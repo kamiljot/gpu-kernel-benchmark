@@ -189,7 +189,12 @@ extern "C" float run_add_shared(const float* a, const float* b, float* c, int N)
  */
 extern "C" float run_add_float4(const float* a, const float* b, float* c, int N)
 {
-   
+    if (N % 4 != 0)
+    {
+        std::cerr << "Error: N must be divisible by 4 for float4 kernel (got " << N << ")\n";
+        return -1.0f;
+    }
+
     int N_vec4 = N / 4;
 
     auto h_a4 = pack_and_pad_to_float4(a, N);
@@ -211,10 +216,12 @@ extern "C" float run_add_float4(const float* a, const float* b, float* c, int N)
         int passes = get_benchmark_passes();
 
         time_ms = benchmark_kernel(
-            [&]() { add_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4, N_vec4); },
+            [&]()
+            {
+                add_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4, N_vec4);
+            },
             warmup, passes);
 
-        // Copy results back to host and free device memory
         copy_from_device_and_free_float4(c, d_c4, d_a4, d_b4, N_vec4);
     }
     catch (const std::exception& e)

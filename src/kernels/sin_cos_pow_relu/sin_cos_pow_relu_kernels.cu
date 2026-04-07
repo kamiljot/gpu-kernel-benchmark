@@ -8,7 +8,7 @@
  * including global memory, shared memory, and float4 vectorized variants.
  */
 
-#include <cmath>
+#include <math.h>
 
 #include "sin_cos_pow_relu_kernels.cuh"
 

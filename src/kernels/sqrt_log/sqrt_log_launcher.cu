@@ -235,7 +235,8 @@ extern "C" float run_sqrt_log_float4(const float* a, const float* b, float* c, i
 {
     if (N % 4 != 0)
     {
-        throw std::invalid_argument("Input size N must be divisible by 4 for float4 kernel.");
+        std::cerr << "Error: N must be divisible by 4 for float4 kernel (got " << N << ")\n";
+        return -1.0f;
     }
 
     int N_vec4 = N / 4;
@@ -258,7 +259,10 @@ extern "C" float run_sqrt_log_float4(const float* a, const float* b, float* c, i
         int passes = get_benchmark_passes();
 
         time_ms = benchmark_kernel(
-            [&]() { sqrt_log_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4, N_vec4); },
+            [&]()
+            {
+                sqrt_log_float4_kernel<<<config.blocks_per_grid, config.threads_per_block>>>(d_a4, d_b4, d_c4, N_vec4);
+            },
             warmup, passes);
 
         copy_from_device_and_free_float4(c, d_c4, d_a4, d_b4, N_vec4);
